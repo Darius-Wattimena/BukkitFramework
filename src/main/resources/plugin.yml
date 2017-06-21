@@ -1,0 +1,4 @@
+name: BukkitFramework
+version: 0.1
+author: Greaper
+main: nl.antimeta.bukkit.framework.Main

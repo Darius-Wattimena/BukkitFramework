@@ -23,17 +23,7 @@ public class Database {
         this.resource = resource;
     }
 
-    public <T extends BaseEntity> void createDatabase(List<T> baseEntities) {
-        try {
-            for (T baseEntity : baseEntities) {
-                createTable(baseEntity.getClass());
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private <T extends BaseEntity> void createTable(Class<T> baseEntity) throws SQLException {
+    public <T extends BaseEntity> void createTable(Class<T> baseEntity) throws SQLException {
         String sql = buildTableSql(baseEntity);
         PreparedStatement stmt = openConnection().prepareStatement(sql);
         stmt.execute();
@@ -51,29 +41,30 @@ public class Database {
         StringBuilder sql = new StringBuilder();
         sql.append("CREATE TABLE IF NOT EXISTS `").append(entity.tableName()).append("` (");
 
-        Annotation[] annotations = getClass().getAnnotations();
+        for (java.lang.reflect.Field entityField : baseEntity.getDeclaredFields()) {
+            for (Annotation annotation : entityField.getAnnotations()) {
+                if (annotation instanceof Field) {
+                    Field field = (Field) annotation;
+                    sql.append("`").append(field.name()).append("` ");
+                    sql.append(getType(field));
 
-        for (Annotation annotation : annotations) {
-            if (annotation instanceof Field) {
-                Field field = (Field) annotation;
-                sql.append("`").append(field.name()).append("` ");
-                sql.append(getType(field));
+                    if (!field.nullable()) {
+                        sql.append(" NOT NULL");
+                    }
 
-                if (!field.nullable()) {
-                    sql.append(" NOT NULL");
+                    if (field.primary()) {
+                        sql.append(" AUTO_INCREMENT");
+                        primaryKeyName = field.name();
+                    }
+
+                    sql.append(", ");
                 }
-
-                if (field.primary()) {
-                    sql.append(" AUTO_INCREMENT");
-                    primaryKeyName = field.name();
-                }
-
-                sql.append(", ");
             }
         }
 
+
         sql.append("PRIMARY KEY (`").append(primaryKeyName).append("`)) ");
-        sql.append("ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTOINCREMENT=0");
+        sql.append("ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=0");
 
         return sql.toString();
     }
