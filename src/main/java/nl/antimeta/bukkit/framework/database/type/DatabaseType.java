@@ -7,6 +7,7 @@ public interface DatabaseType {
     String getName();
     String getDriverClassName();
     String getUrlPortion();
+    String getTableSuffix();
 
     String getType(FieldType fieldType);
 }

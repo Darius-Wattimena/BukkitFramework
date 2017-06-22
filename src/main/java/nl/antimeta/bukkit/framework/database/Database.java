@@ -8,8 +8,10 @@ import nl.antimeta.bukkit.framework.database.model.Resource;
 import nl.antimeta.bukkit.framework.database.type.DatabaseType;
 
 import java.lang.annotation.Annotation;
-import java.sql.*;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class Database {
 
@@ -64,7 +66,7 @@ public class Database {
 
 
         sql.append("PRIMARY KEY (`").append(primaryKeyName).append("`)) ");
-        sql.append("ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=0");
+        sql.append(databaseType.getTableSuffix()).append(" DEFAULT CHARSET=utf8 AUTO_INCREMENT=0");
 
         return sql.toString();
     }
@@ -114,5 +116,9 @@ public class Database {
 
     private boolean checkConnection() throws SQLException {
         return connection != null && !connection.isClosed();
+    }
+
+    public DatabaseType getDatabaseType() {
+        return databaseType;
     }
 }

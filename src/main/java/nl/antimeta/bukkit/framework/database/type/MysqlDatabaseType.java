@@ -28,6 +28,11 @@ public class MysqlDatabaseType implements DatabaseType {
     }
 
     @Override
+    public String getTableSuffix() {
+        return createTableSuffix;
+    }
+
+    @Override
     public String getType(FieldType fieldType) {
         switch (fieldType) {
             case SmallInt:
