@@ -5,10 +5,14 @@ import nl.antimeta.bukkit.framework.database.annotation.Field;
 import nl.antimeta.bukkit.framework.database.model.BaseEntity;
 import nl.antimeta.bukkit.framework.database.model.FieldConfig;
 import nl.antimeta.bukkit.framework.database.model.TableConfig;
+import nl.antimeta.bukkit.framework.exception.FieldNotFoundException;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Dao<T extends BaseEntity> {
@@ -17,6 +21,7 @@ public class Dao<T extends BaseEntity> {
     private TableConfig tableConfig;
     private Class<T> tClass;
     private Entity entity;
+    private T entityObject;
 
     public Dao(Database database, Class<T> tClass) throws Exception {
         this.database = database;
@@ -39,6 +44,8 @@ public class Dao<T extends BaseEntity> {
             fieldConfig.setPrimary(field.primary());
             fieldConfig.setSize(field.size());
             fieldConfig.setDigitSize(field.digitSize());
+            fieldConfig.setGet(findGetter(entityField));
+            fieldConfig.setSet(findSetter(entityField));
             tableConfig.getFieldConfigs().add(fieldConfig);
         }
     }
@@ -71,6 +78,46 @@ public class Dao<T extends BaseEntity> {
         return processResultSet(resultSet);
     }
 
+    private boolean create() throws SQLException {
+        String sql = buildInsert();
+        return executeNoResult(sql);
+    }
+
+    private boolean update() throws SQLException {
+        String sql = buildUpdate();
+        return executeNoResult(sql);
+    }
+
+    public boolean save(T entity) throws SQLException, FieldNotFoundException {
+        this.entityObject = entity;
+        if (entity.getId() == null) {
+            return create();
+        } else {
+            return update();
+        }
+    }
+
+    public boolean delete(T entity) {
+        return delete(entity.getId());
+    }
+
+    public boolean delete(Integer id) {
+        //TODO
+        if (id == null) {
+            return false;
+        }
+
+        return false;
+    }
+
+    public boolean delete(String field, Object value) {
+        return false;
+    }
+
+    public boolean delete(Map<String, Object> parameters) {
+        return false;
+    }
+
     private T processResultSet(ResultSet resultSet) {
         T result = null;
         try {
@@ -84,13 +131,15 @@ public class Dao<T extends BaseEntity> {
 
     private String buildFindPrimaryKeySql(int id) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM ").append(entity.tableName());
+        sql.append("SELECT * FROM ").append(tableConfig.getTableName());
 
         for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
             Field field = entityField.getAnnotation(Field.class);
-            if (field.primary()) {
-                sql.append(" WHERE ").append(field.name()).append(" = '").append(id).append("'");
-                return sql.toString();
+            if (field != null) {
+                if (field.primary()) {
+                    sql.append(" WHERE ").append(field.name()).append(" = '").append(id).append("'");
+                    return sql.toString();
+                }
             }
         }
         return null;
@@ -98,16 +147,9 @@ public class Dao<T extends BaseEntity> {
 
     private String buildFind(String field, Object value) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM ").append(entity.tableName());
-
-        for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
-            Field fieldAnnotation = entityField.getAnnotation(Field.class);
-            if (fieldAnnotation.name().equals(field)) {
-                sql.append(" WHERE ").append(field).append(" = '").append(value).append("'");
-                return sql.toString();
-            }
-        }
-        return null;
+        sql.append("SELECT * FROM ").append(tableConfig.getTableName());
+        sql.append(" WHERE ").append(field).append(" = '").append(value).append("'");
+        return sql.toString();
     }
 
     private String buildFind(Map<String, Object> parameters) {
@@ -131,7 +173,94 @@ public class Dao<T extends BaseEntity> {
         return sql.toString();
     }
 
+    private String buildInsert() {
+        StringBuilder sql = new StringBuilder();
+        sql.append("INSERT INTO ").append(tableConfig.getTableName()).append(" ");
+
+        Map<String, String> fieldMap = new HashMap<>();
+
+        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs()) {
+            if (!fieldConfig.isPrimary()) {
+                fieldMap.put(fieldConfig.getFieldName(), runGetter(fieldConfig));
+            }
+        }
+
+        StringBuilder fieldNames = new StringBuilder("(");
+        StringBuilder fieldValues = new StringBuilder("(");
+        boolean firstField = true;
+        for (Map.Entry<String, String> entry : fieldMap.entrySet()) {
+            if (firstField) {
+                fieldNames.append(entry.getKey());
+                fieldValues.append("'").append(entry.getValue()).append("'");
+                firstField = false;
+            } else {
+                fieldNames.append(", ").append(entry.getKey());
+                fieldValues.append(", '").append(entry.getValue()).append("'");
+            }
+        }
+
+        fieldNames.append(") ");
+        fieldValues.append(") ");
+
+        sql.append(fieldNames);
+        sql.append(fieldValues);
+
+        return sql.toString();
+    }
+
+    private String buildUpdate() {
+        StringBuilder sql = new StringBuilder();
+        sql.append("UPDATE ").append(this.entity.tableName()).append(" SET ");
+
+        boolean firstField = true;
+        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs()) {
+            if (fieldConfig.isPrimary()) {
+                if (firstField) {
+                    sql.append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
+                    firstField = false;
+                } else {
+                    sql.append(", ").append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
+                }
+            }
+        }
+
+        return sql.toString();
+    }
+
     public TableConfig getTableConfig() {
         return tableConfig;
+    }
+
+    private String runGetter(FieldConfig fieldConfig) {
+        try {
+            Object object = fieldConfig.getGet().invoke(entityObject);
+            return object.toString();
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            //TODO log error
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Method findGetter(java.lang.reflect.Field field) {
+        for (Method method : tClass.getMethods()) {
+            if ((method.getName().startsWith("get")) && (method.getName().length() == (field.getName().length() + 3))) {
+                if (method.getName().toLowerCase().endsWith(field.getName().toLowerCase())) {
+                    return method;
+                }
+            }
+        }
+        return null;
+    }
+
+    private Method findSetter(java.lang.reflect.Field field) {
+        for (Method method : tClass.getMethods()) {
+            if ((method.getName().startsWith("get")) && (method.getName().length() == (field.getName().length() + 3))) {
+                if (method.getName().toLowerCase().endsWith(field.getName().toLowerCase())) {
+                    return method;
+                }
+            }
+        }
+        return null;
     }
 }

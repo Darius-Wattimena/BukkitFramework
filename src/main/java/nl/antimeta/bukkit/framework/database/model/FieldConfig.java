@@ -1,11 +1,15 @@
 package nl.antimeta.bukkit.framework.database.model;
 
+import java.lang.reflect.Method;
+
 public class FieldConfig {
     private String fieldName;
     private boolean primary;
     private FieldType fieldType;
     private int size;
     private int digitSize;
+    private Method get;
+    private Method set;
 
     public String getFieldName() {
         return fieldName;
@@ -45,5 +49,21 @@ public class FieldConfig {
 
     public void setDigitSize(int digitSize) {
         this.digitSize = digitSize;
+    }
+
+    public Method getGet() {
+        return get;
+    }
+
+    public void setGet(Method get) {
+        this.get = get;
+    }
+
+    public Method getSet() {
+        return set;
+    }
+
+    public void setSet(Method set) {
+        this.set = set;
     }
 }
