@@ -5,7 +5,6 @@ import nl.antimeta.bukkit.framework.database.annotation.Field;
 import nl.antimeta.bukkit.framework.database.model.BaseEntity;
 import nl.antimeta.bukkit.framework.database.model.FieldConfig;
 import nl.antimeta.bukkit.framework.database.model.TableConfig;
-import nl.antimeta.bukkit.framework.exception.FieldNotFoundException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -88,7 +87,7 @@ public class Dao<T extends BaseEntity> {
         return executeNoResult(sql);
     }
 
-    public boolean save(T entity) throws SQLException, FieldNotFoundException {
+    public boolean save(T entity) throws SQLException {
         this.entityObject = entity;
         if (entity.getId() == null) {
             return create();
@@ -97,25 +96,27 @@ public class Dao<T extends BaseEntity> {
         }
     }
 
-    public boolean delete(T entity) {
+    public boolean delete(T entity) throws SQLException {
         return delete(entity.getId());
     }
 
-    public boolean delete(Integer id) {
-        //TODO
-        if (id == null) {
-            return false;
+    public boolean delete(Integer id) throws SQLException {
+        if (id != null) {
+            String sql = buildDelete(id);
+            return executeNoResult(sql);
         }
 
         return false;
     }
 
-    public boolean delete(String field, Object value) {
-        return false;
+    public boolean delete(String field, Object value) throws SQLException {
+        String sql = buildDelete(field, value);
+        return executeNoResult(sql);
     }
 
-    public boolean delete(Map<String, Object> parameters) {
-        return false;
+    public boolean delete(Map<String, Object> parameters) throws SQLException {
+        String sql = buildDelete(parameters);
+        return executeNoResult(sql);
     }
 
     private T processResultSet(ResultSet resultSet) {
@@ -221,6 +222,43 @@ public class Dao<T extends BaseEntity> {
                 } else {
                     sql.append(", ").append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
                 }
+            }
+        }
+
+        return sql.toString();
+    }
+
+    private String buildDelete(int id) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ").append(tableConfig.getTableName());
+        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs()) {
+            if (fieldConfig.isPrimary()) {
+                sql.append(" WHERE ").append(fieldConfig.getFieldName()).append(" = '").append(id).append("'");
+                return sql.toString();
+            }
+        }
+
+        return null;
+    }
+
+    private String buildDelete(String field, Object value) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ").append(tableConfig.getTableName());
+        sql.append(" WHERE ").append(field).append(" = '").append(value).append("'");
+        return sql.toString();
+    }
+
+    private String buildDelete(Map<String, Object> parameters) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ").append(tableConfig.getTableName());
+
+        boolean first = true;
+        for (Map.Entry<String, Object> set : parameters.entrySet()) {
+            if (first) {
+                sql.append(" WHERE ").append(set.getKey()).append(" = '").append(set.getValue()).append("'");
+                first = false;
+            } else {
+                sql.append(" AND ").append(set.getKey()).append(" = '").append(set.getValue()).append("'");
             }
         }
 
