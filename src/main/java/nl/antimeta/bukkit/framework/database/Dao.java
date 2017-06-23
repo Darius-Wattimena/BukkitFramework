@@ -5,6 +5,7 @@ import nl.antimeta.bukkit.framework.database.annotation.Field;
 import nl.antimeta.bukkit.framework.database.model.BaseEntity;
 import nl.antimeta.bukkit.framework.database.model.FieldConfig;
 import nl.antimeta.bukkit.framework.database.model.TableConfig;
+import nl.antimeta.bukkit.framework.util.LogUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,9 +13,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class Dao<T extends BaseEntity> {
+public class Dao<T extends BaseEntity<T>> {
 
     private Database database;
     private TableConfig tableConfig;
@@ -37,15 +39,17 @@ public class Dao<T extends BaseEntity> {
     private void initFieldConfig() {
         for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
             Field field = entityField.getAnnotation(Field.class);
-            FieldConfig fieldConfig = new FieldConfig();
-            fieldConfig.setFieldName(field.name());
-            fieldConfig.setFieldType(field.fieldType());
-            fieldConfig.setPrimary(field.primary());
-            fieldConfig.setSize(field.size());
-            fieldConfig.setDigitSize(field.digitSize());
-            fieldConfig.setGet(findGetter(entityField));
-            fieldConfig.setSet(findSetter(entityField));
-            tableConfig.getFieldConfigs().add(fieldConfig);
+            if (field != null) {
+                FieldConfig fieldConfig = new FieldConfig();
+                fieldConfig.setFieldName(field.name());
+                fieldConfig.setFieldType(field.fieldType());
+                fieldConfig.setPrimary(field.primary());
+                fieldConfig.setSize(field.size());
+                fieldConfig.setDigitSize(field.digitSize());
+                fieldConfig.setGet(findGetter(entityField));
+                fieldConfig.setSet(findSetter(entityField));
+                tableConfig.getFieldConfigs().add(fieldConfig);
+            }
         }
     }
 
@@ -59,31 +63,36 @@ public class Dao<T extends BaseEntity> {
         return stmt.execute();
     }
 
-    public T find(int id) throws SQLException {
+    public List<T> find(int id) throws SQLException {
         String sql = buildFindPrimaryKeySql(id);
+        LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
-    public T find(String field, Object value) throws SQLException {
+    public List<T> find(String field, Object value) throws SQLException {
         String sql = buildFind(field, value);
+        LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
-    public T find(Map<String, Object> parameters) throws SQLException {
+    public List<T> find(Map<String, Object> parameters) throws SQLException {
         String sql = buildFind(parameters);
+        LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
     private boolean create() throws SQLException {
         String sql = buildInsert();
+        LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
     private boolean update() throws SQLException {
         String sql = buildUpdate();
+        LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
@@ -103,6 +112,7 @@ public class Dao<T extends BaseEntity> {
     public boolean delete(Integer id) throws SQLException {
         if (id != null) {
             String sql = buildDelete(id);
+            LogUtil.info(sql);
             return executeNoResult(sql);
         }
 
@@ -111,28 +121,28 @@ public class Dao<T extends BaseEntity> {
 
     public boolean delete(String field, Object value) throws SQLException {
         String sql = buildDelete(field, value);
+        LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
     public boolean delete(Map<String, Object> parameters) throws SQLException {
         String sql = buildDelete(parameters);
+        LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
-    private T processResultSet(ResultSet resultSet) {
-        T result = null;
+    private List<T> processResultSet(ResultSet resultSet) {
         try {
-            result = tClass.newInstance();
-            result.buildResultSet(resultSet);
+            return tClass.newInstance().buildResultSet(resultSet);
         } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
-        return result;
+        return null;
     }
 
     private String buildFindPrimaryKeySql(int id) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM ").append(tableConfig.getTableName());
+        sql.append("SELECT * FROM ").append(tableConfig.getTableName()).append("\n");
 
         for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
             Field field = entityField.getAnnotation(Field.class);
@@ -148,7 +158,7 @@ public class Dao<T extends BaseEntity> {
 
     private String buildFind(String field, Object value) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM ").append(tableConfig.getTableName());
+        sql.append("SELECT * FROM ").append(tableConfig.getTableName()).append("\n");
         sql.append(" WHERE ").append(field).append(" = '").append(value).append("'");
         return sql.toString();
     }
@@ -159,15 +169,15 @@ public class Dao<T extends BaseEntity> {
         }
 
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM ").append(entity.tableName());
+        sql.append("SELECT * FROM ").append(entity.tableName()).append("\n");
 
         boolean first = true;
         for (Map.Entry<String, Object> set : parameters.entrySet()) {
             if (first) {
-                sql.append(" WHERE ").append(set.getKey()).append(" = '").append(set.getValue()).append("'");
+                sql.append(" WHERE ").append(set.getKey()).append(" = '").append(set.getValue()).append("'\n");
                 first = false;
             } else {
-                sql.append(" AND ").append(set.getKey()).append(" = '").append(set.getValue()).append("'");
+                sql.append(" AND ").append(set.getKey()).append(" = '").append(set.getValue()).append("'\n");
             }
         }
 
@@ -176,7 +186,7 @@ public class Dao<T extends BaseEntity> {
 
     private String buildInsert() {
         StringBuilder sql = new StringBuilder();
-        sql.append("INSERT INTO ").append(tableConfig.getTableName()).append(" ");
+        sql.append("INSERT INTO ").append(tableConfig.getTableName()).append(" \n");
 
         Map<String, String> fieldMap = new HashMap<>();
 
@@ -187,7 +197,7 @@ public class Dao<T extends BaseEntity> {
         }
 
         StringBuilder fieldNames = new StringBuilder("(");
-        StringBuilder fieldValues = new StringBuilder("(");
+        StringBuilder fieldValues = new StringBuilder("VALUES (");
         boolean firstField = true;
         for (Map.Entry<String, String> entry : fieldMap.entrySet()) {
             if (firstField) {
@@ -203,7 +213,7 @@ public class Dao<T extends BaseEntity> {
         fieldNames.append(") ");
         fieldValues.append(") ");
 
-        sql.append(fieldNames);
+        sql.append(fieldNames).append("\n");
         sql.append(fieldValues);
 
         return sql.toString();
@@ -274,8 +284,7 @@ public class Dao<T extends BaseEntity> {
             Object object = fieldConfig.getGet().invoke(entityObject);
             return object.toString();
         } catch (IllegalAccessException | InvocationTargetException e) {
-            //TODO log error
-            e.printStackTrace();
+            LogUtil.error("Dao.java:279 | " + e.getMessage());
         }
         return null;
     }
