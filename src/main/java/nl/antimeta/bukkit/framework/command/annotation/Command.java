@@ -14,5 +14,13 @@ public @interface Command {
      */
     String[] subcommands() default "";
 
+    /**
+     * The permission needed to use the command.
+     */
+    String permission() default "";
 
+    /**
+     * Aliases of the main command.
+     */
+    String[] aliases() default "";
 }
