@@ -6,6 +6,7 @@ import nl.antimeta.bukkit.framework.database.model.BaseEntity;
 import nl.antimeta.bukkit.framework.database.model.FieldType;
 import nl.antimeta.bukkit.framework.database.model.Resource;
 import nl.antimeta.bukkit.framework.database.type.DatabaseType;
+import org.apache.commons.lang.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.sql.Connection;
@@ -44,23 +45,28 @@ public class Database {
         sql.append("CREATE TABLE IF NOT EXISTS `").append(entity.tableName()).append("` (");
 
         for (java.lang.reflect.Field entityField : baseEntity.getDeclaredFields()) {
-            for (Annotation annotation : entityField.getAnnotations()) {
-                if (annotation instanceof Field) {
-                    Field field = (Field) annotation;
-                    sql.append("`").append(field.name()).append("` ");
-                    sql.append(getType(field));
-
-                    if (!field.nullable()) {
-                        sql.append(" NOT NULL");
-                    }
-
-                    if (field.primary()) {
-                        sql.append(" AUTO_INCREMENT");
-                        primaryKeyName = field.name();
-                    }
-
-                    sql.append(", ");
+            Field field = entityField.getAnnotation(Field.class);
+            if (field != null) {
+                String fieldName;
+                if (StringUtils.isBlank(field.fieldName())) {
+                    fieldName = entityField.getName();
+                } else {
+                    fieldName = field.fieldName();
                 }
+
+                sql.append("`").append(fieldName).append("` ");
+                sql.append(getType(field));
+
+                if (!field.nullable()) {
+                    sql.append(" NOT NULL");
+                }
+
+                if (field.primary()) {
+                    sql.append(" AUTO_INCREMENT");
+                    primaryKeyName = field.fieldName();
+                }
+
+                sql.append(", ");
             }
         }
 

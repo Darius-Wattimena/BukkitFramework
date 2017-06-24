@@ -6,6 +6,7 @@ import nl.antimeta.bukkit.framework.database.model.BaseEntity;
 import nl.antimeta.bukkit.framework.database.model.FieldConfig;
 import nl.antimeta.bukkit.framework.database.model.TableConfig;
 import nl.antimeta.bukkit.framework.util.LogUtil;
+import org.apache.commons.lang.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -40,15 +41,22 @@ public class Dao<T extends BaseEntity<T>> {
         for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
             Field field = entityField.getAnnotation(Field.class);
             if (field != null) {
+                String fieldName;
+                if (StringUtils.isBlank(field.fieldName())) {
+                    fieldName = entityField.getName();
+                } else {
+                    fieldName = field.fieldName();
+                }
+
                 FieldConfig fieldConfig = new FieldConfig();
-                fieldConfig.setFieldName(field.name());
+                fieldConfig.setFieldName(fieldName);
                 fieldConfig.setFieldType(field.fieldType());
                 fieldConfig.setPrimary(field.primary());
                 fieldConfig.setSize(field.size());
                 fieldConfig.setDigitSize(field.digitSize());
                 fieldConfig.setGet(findGetter(entityField));
                 fieldConfig.setSet(findSetter(entityField));
-                tableConfig.getFieldConfigs().add(fieldConfig);
+                tableConfig.getFieldConfigs().put(fieldName, fieldConfig);
             }
         }
     }
@@ -144,14 +152,10 @@ public class Dao<T extends BaseEntity<T>> {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT * FROM ").append(tableConfig.getTableName()).append("\n");
 
-        for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
-            Field field = entityField.getAnnotation(Field.class);
-            if (field != null) {
-                if (field.primary()) {
-                    sql.append(" WHERE ").append(field.name()).append(" = '").append(id).append("'");
-                    return sql.toString();
-                }
-            }
+        FieldConfig fieldConfig = tableConfig.getPrimaryFieldConfig();
+        if (fieldConfig != null) {
+            sql.append(" WHERE ").append(fieldConfig.getFieldName()).append(" = '").append(id).append("'");
+            return sql.toString();
         }
         return null;
     }
@@ -190,7 +194,7 @@ public class Dao<T extends BaseEntity<T>> {
 
         Map<String, String> fieldMap = new HashMap<>();
 
-        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs()) {
+        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs().values()) {
             if (!fieldConfig.isPrimary()) {
                 fieldMap.put(fieldConfig.getFieldName(), runGetter(fieldConfig));
             }
@@ -224,7 +228,7 @@ public class Dao<T extends BaseEntity<T>> {
         sql.append("UPDATE ").append(this.entity.tableName()).append(" SET ");
 
         boolean firstField = true;
-        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs()) {
+        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs().values()) {
             if (fieldConfig.isPrimary()) {
                 if (firstField) {
                     sql.append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
@@ -241,7 +245,7 @@ public class Dao<T extends BaseEntity<T>> {
     private String buildDelete(int id) {
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ").append(tableConfig.getTableName());
-        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs()) {
+        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs().values()) {
             if (fieldConfig.isPrimary()) {
                 sql.append(" WHERE ").append(fieldConfig.getFieldName()).append(" = '").append(id).append("'");
                 return sql.toString();

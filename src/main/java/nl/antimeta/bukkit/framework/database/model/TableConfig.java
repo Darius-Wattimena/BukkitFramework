@@ -2,16 +2,16 @@ package nl.antimeta.bukkit.framework.database.model;
 
 import nl.antimeta.bukkit.framework.database.type.DatabaseType;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TableConfig {
     private String tableName;
     private DatabaseType databaseType;
-    private List<FieldConfig> fieldConfigs;
+    private Map<String, FieldConfig> fieldConfigs;
 
     public TableConfig() {
-        fieldConfigs = new ArrayList<>();
+        fieldConfigs = new HashMap<>();
     }
 
     public String getTableName() {
@@ -30,16 +30,12 @@ public class TableConfig {
         this.databaseType = databaseType;
     }
 
-    public List<FieldConfig> getFieldConfigs() {
+    public Map<String, FieldConfig> getFieldConfigs() {
         return fieldConfigs;
     }
 
-    public void setFieldConfigs(List<FieldConfig> fieldConfigs) {
-        this.fieldConfigs = fieldConfigs;
-    }
-
     public FieldConfig getPrimaryFieldConfig() {
-        for (FieldConfig fieldConfig : fieldConfigs) {
+        for (FieldConfig fieldConfig : fieldConfigs.values()) {
             if (fieldConfig.isPrimary()) {
                 return fieldConfig;
             }

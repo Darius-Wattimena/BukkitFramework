@@ -8,5 +8,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Entity {
+
+    /**
+     * Name of the table in the database.
+     */
     String tableName() default "";
 }
