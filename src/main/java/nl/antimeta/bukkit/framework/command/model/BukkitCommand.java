@@ -19,7 +19,7 @@ public class BukkitCommand {
 
     private CommandSender sender;
 
-    private List<String> args;
+    private String[] args;
 
     public String getMain() {
         return main;
@@ -73,11 +73,11 @@ public class BukkitCommand {
         this.sender = sender;
     }
 
-    public List<String> getArgs() {
+    public String[] getArgs() {
         return args;
     }
 
-    public void setArgs(List<String> args) {
+    public void setArgs(String[] args) {
         this.args = args;
     }
 }

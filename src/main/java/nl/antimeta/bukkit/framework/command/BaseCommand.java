@@ -24,7 +24,7 @@ public abstract class BaseCommand implements CommandExecutor {
             bukkitCommand.setAliases(Arrays.asList(command.aliases()));
             bukkitCommand.setCommand(cmd);
             bukkitCommand.setSender(sender);
-            bukkitCommand.setArgs(Arrays.asList(args));
+            bukkitCommand.setArgs(args);
         }
 
         return onBaseCommand(bukkitCommand);
