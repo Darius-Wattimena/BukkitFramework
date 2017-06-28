@@ -1,8 +1,11 @@
 package nl.antimeta.bukkit.framework.command.model;
 
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+
 import java.util.List;
 
-public class CommandInfo {
+public class BukkitCommand {
 
     private String main;
 
@@ -11,6 +14,12 @@ public class CommandInfo {
     private String permission;
 
     private List<String> aliases;
+
+    private Command command;
+
+    private CommandSender sender;
+
+    private List<String> args;
 
     public String getMain() {
         return main;
@@ -46,5 +55,29 @@ public class CommandInfo {
 
     public void setAliases(List<String> aliases) {
         this.aliases = aliases;
+    }
+
+    public Command getCommand() {
+        return command;
+    }
+
+    public void setCommand(Command command) {
+        this.command = command;
+    }
+
+    public CommandSender getSender() {
+        return sender;
+    }
+
+    public void setSender(CommandSender sender) {
+        this.sender = sender;
+    }
+
+    public List<String> getArgs() {
+        return args;
+    }
+
+    public void setArgs(List<String> args) {
+        this.args = args;
     }
 }
