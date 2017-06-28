@@ -1,5 +1,7 @@
 package nl.antimeta.bukkit.framework.command;
 
+import nl.antimeta.bukkit.framework.command.model.BukkitCommand;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
@@ -18,11 +20,18 @@ public class MainCommand implements CommandExecutor {
         this.name = name;
     }
 
-    public void addSubCommand(String command, CommandExecutor commandExecutor) {
-        if (commandExecutor == null || command == null || command.isEmpty()) {
+    public void addSubCommand(BaseCommand baseCommand) {
+        BukkitCommand bukkitCommand = baseCommand.getBukkitCommand();
+        if (bukkitCommand == null || bukkitCommand.getMain() == null) {
             throw new IllegalArgumentException("invalid command paramters specified");
         }
-        subcommands.put(command.toLowerCase(), commandExecutor);
+
+        for (String subcommand : bukkitCommand.getSubcommands()) {
+            if (StringUtils.isNotBlank(subcommand)) {
+                subcommands.put(subcommand, baseCommand);
+            }
+        }
+        subcommands.put(bukkitCommand.getMain(), baseCommand);
     }
 
     @Override

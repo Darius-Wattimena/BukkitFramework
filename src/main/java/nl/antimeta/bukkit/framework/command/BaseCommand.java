@@ -31,4 +31,8 @@ public abstract class BaseCommand implements CommandExecutor {
     }
 
     protected abstract boolean onBaseCommand(BukkitCommand commandInfo);
+
+    public BukkitCommand getBukkitCommand() {
+        return bukkitCommand;
+    }
 }

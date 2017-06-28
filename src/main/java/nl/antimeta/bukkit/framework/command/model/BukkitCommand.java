@@ -3,17 +3,18 @@ package nl.antimeta.bukkit.framework.command.model;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BukkitCommand {
 
     private String main;
 
-    private List<String> subcommands;
+    private List<String> subcommands = new ArrayList<>();
 
     private String permission;
 
-    private List<String> aliases;
+    private List<String> aliases = new ArrayList<>();
 
     private Command command;
 

@@ -1,25 +1,41 @@
 package nl.antimeta.bukkit.framework.command;
 
 import nl.antimeta.bukkit.framework.command.model.BukkitCommand;
+import nl.antimeta.bukkit.framework.command.model.BukkitPlayerCommand;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.entity.Player;
-
-import java.util.UUID;
 
 public abstract class PlayerCommand extends BaseCommand {
 
-    protected Player player;
-    protected UUID playerUUID;
+    private BukkitPlayerCommand bukkitPlayerCommand;
 
     @Override
     protected boolean onBaseCommand(BukkitCommand bukkitCommand) {
         if (sender instanceof Player) {
-            this.player = (Player) sender;
-            playerUUID = player.getUniqueId();
-            return onPlayerCommand(bukkitCommand, player);
+            Player player = (Player) sender;
+            checkPermission(player, bukkitCommand);
+            bukkitPlayerCommand = new BukkitPlayerCommand(bukkitCommand);
+            bukkitPlayerCommand.setPlayer(player);
+            bukkitPlayerCommand.setPlayerUUID(player.getUniqueId());
+            return onPlayerCommand(bukkitPlayerCommand);
         }
 
         return true;
     }
 
-    protected abstract boolean onPlayerCommand(BukkitCommand commandInfo, Player sender);
+    protected void checkPermission(Player player, BukkitCommand bukkitCommand) {
+        if (StringUtils.isNotBlank(bukkitCommand.getPermission())) {
+            if (player.hasPermission(bukkitCommand.getPermission())) {
+                onNoPermission(bukkitCommand);
+            }
+        }
+    }
+
+    protected abstract boolean onPlayerCommand(BukkitPlayerCommand bukkitPlayerCommand);
+
+    protected abstract void onNoPermission(BukkitCommand bukkitCommand);
+
+    public BukkitPlayerCommand getBukkitPlayerCommand() {
+        return bukkitPlayerCommand;
+    }
 }

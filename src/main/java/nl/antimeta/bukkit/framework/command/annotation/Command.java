@@ -19,7 +19,7 @@ public @interface Command {
     /**
      * Command will be called when calling one of the given subcommands.
      */
-    String[] subcommands();
+    String[] subcommands() default "";
 
     /**
      * The permission needed to use the command.
