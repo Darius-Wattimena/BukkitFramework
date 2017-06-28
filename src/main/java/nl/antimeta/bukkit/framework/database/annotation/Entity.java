@@ -12,5 +12,5 @@ public @interface Entity {
     /**
      * Name of the table in the database.
      */
-    String tableName() default "";
+    String tableName();
 }

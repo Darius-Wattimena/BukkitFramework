@@ -14,7 +14,7 @@ public @interface Field {
     /**
      * The name of the field on the database.
      */
-    String fieldName() default "";
+    String fieldName();
 
     /**
      * Set this to true when the target field is the primary key.
@@ -29,7 +29,7 @@ public @interface Field {
     /**
      * The type of the given field.
      */
-    FieldType fieldType() default FieldType.Unknown;
+    FieldType fieldType();
 
     /**
      * Size of this field.
