@@ -115,7 +115,7 @@ public class Database {
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
-            connection = DriverManager.getConnection("jdbc:" + databaseType.getUrlPortion() + "://" + resource.getHostname() + ':' + resource.getPort() + '/' + resource.getDatabase() + "?useSSL=false", resource.getUser(), resource.getPassword());
+            connection = DriverManager.getConnection("jdbc:" + databaseType.getUrlPortion() + "://" + resource.getHostname() + ':' + resource.getPort() + '/' + resource.getDatabase() + "?useSSL=false&autoReconnect=true&useUnicode=yes", resource.getUser(), resource.getPassword());
             return connection;
         }
     }

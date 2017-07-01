@@ -26,9 +26,9 @@ public class MainCommand implements CommandExecutor {
             throw new IllegalArgumentException("invalid command paramters specified");
         }
 
-        for (String subcommand : bukkitCommand.getSubcommands()) {
-            if (StringUtils.isNotBlank(subcommand)) {
-                subcommands.put(subcommand, baseCommand);
+        for (String aliase : bukkitCommand.getAliases()) {
+            if (StringUtils.isNotBlank(aliase)) {
+                subcommands.put(aliase, baseCommand);
             }
         }
         subcommands.put(bukkitCommand.getMain(), baseCommand);
