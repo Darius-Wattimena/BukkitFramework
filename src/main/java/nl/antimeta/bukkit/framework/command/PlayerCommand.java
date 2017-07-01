@@ -13,7 +13,10 @@ public abstract class PlayerCommand extends BaseCommand {
     protected boolean onBaseCommand(BukkitCommand bukkitCommand) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            checkPermission(player, bukkitCommand);
+            boolean gotPermission = checkPermission(player, bukkitCommand);
+            if (!gotPermission) {
+                return true;
+            }
             bukkitPlayerCommand = new BukkitPlayerCommand(bukkitCommand);
             bukkitPlayerCommand.setPlayer(player);
             bukkitPlayerCommand.setPlayerUUID(player.getUniqueId());
@@ -23,12 +26,14 @@ public abstract class PlayerCommand extends BaseCommand {
         return true;
     }
 
-    protected void checkPermission(Player player, BukkitCommand bukkitCommand) {
+    protected boolean checkPermission(Player player, BukkitCommand bukkitCommand) {
         if (StringUtils.isNotBlank(bukkitCommand.getPermission())) {
             if (player.hasPermission(bukkitCommand.getPermission())) {
                 onNoPermission(bukkitCommand);
+                return false;
             }
         }
+        return true;
     }
 
     protected abstract boolean onPlayerCommand(BukkitPlayerCommand bukkitPlayerCommand);
