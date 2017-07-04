@@ -28,7 +28,7 @@ public abstract class PlayerCommand extends BaseCommand {
 
     protected boolean checkPermission(Player player, BukkitCommand bukkitCommand) {
         if (StringUtils.isNotBlank(bukkitCommand.getPermission())) {
-            if (player.hasPermission(bukkitCommand.getPermission())) {
+            if (!player.hasPermission(bukkitCommand.getPermission())) {
                 onNoPermission(bukkitCommand);
                 return false;
             }

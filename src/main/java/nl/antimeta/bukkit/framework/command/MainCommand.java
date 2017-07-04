@@ -14,10 +14,12 @@ public class MainCommand implements CommandExecutor {
 
     private Map<String, CommandExecutor> subcommands = new HashMap<>();
 
-    private String name;
+    private final String name;
+    private final String auteur;
 
-    public MainCommand(String name) {
+    public MainCommand(String name, String auteur) {
         this.name = name;
+        this.auteur = auteur;
     }
 
     public void addSubCommand(BaseCommand baseCommand) {
@@ -40,7 +42,8 @@ public class MainCommand implements CommandExecutor {
             CommandExecutor executor = getSubCommand(args[0]);
             return executor.onCommand(sender, cmd, label, removeFirstArg(args));
         } else {
-            sender.sendMessage(ChatColor.GREEN + "Do " + ChatColor.AQUA + "/" + name +" help " + ChatColor.GREEN + "to see help for the plugin.");
+            sender.sendMessage(ChatColor.GREEN + "Plugin made by " + auteur);
+            sender.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/" + name +" help " + ChatColor.GREEN + "to see help for the plugin.");
             return true;
         }
     }
