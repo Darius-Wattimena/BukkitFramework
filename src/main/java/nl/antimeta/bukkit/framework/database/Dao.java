@@ -20,7 +20,7 @@ import java.util.Map;
 public class Dao<T extends BaseEntity<T>> {
 
     private Database database;
-    private TableConfig tableConfig;
+    private TableConfig<T> tableConfig;
     private Class<T> tClass;
     private Entity entity;
     private T entityObject;
@@ -30,7 +30,7 @@ public class Dao<T extends BaseEntity<T>> {
         this.tClass = tClass;
         entity = tClass.getAnnotation(Entity.class);
         if (entity != null) {
-            tableConfig = new TableConfig();
+            tableConfig = new TableConfig<>();
             tableConfig.setDatabaseType(database.getDatabaseType());
             tableConfig.setTableName(entity.tableName());
             initFieldConfig();
@@ -41,6 +41,10 @@ public class Dao<T extends BaseEntity<T>> {
         for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
             Field field = entityField.getAnnotation(Field.class);
             if (field != null) {
+                if (!entityField.isAccessible()) {
+                    entityField.setAccessible(true);
+                }
+
                 String fieldName;
                 if (StringUtils.isBlank(field.fieldName())) {
                     fieldName = entityField.getName();
@@ -48,14 +52,13 @@ public class Dao<T extends BaseEntity<T>> {
                     fieldName = field.fieldName();
                 }
 
-                FieldConfig fieldConfig = new FieldConfig();
+                FieldConfig<T> fieldConfig = new FieldConfig<>();
+                fieldConfig.setField(entityField);
                 fieldConfig.setFieldName(fieldName);
                 fieldConfig.setFieldType(field.fieldType());
                 fieldConfig.setPrimary(field.primary());
                 fieldConfig.setSize(field.size());
                 fieldConfig.setDigitSize(field.digitSize());
-                fieldConfig.setGet(findGetter(entityField));
-                fieldConfig.setSet(findSetter(entityField));
                 tableConfig.getFieldConfigs().put(fieldName, fieldConfig);
             }
         }
@@ -98,8 +101,8 @@ public class Dao<T extends BaseEntity<T>> {
         return executeNoResult(sql);
     }
 
-    private boolean update() throws SQLException {
-        String sql = buildUpdate();
+    private boolean update(T entity) throws SQLException {
+        String sql = buildUpdate(entity.getId());
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
@@ -109,7 +112,7 @@ public class Dao<T extends BaseEntity<T>> {
         if (entity.getId() == null) {
             return create();
         } else {
-            return update();
+            return update(entity);
         }
     }
 
@@ -194,7 +197,7 @@ public class Dao<T extends BaseEntity<T>> {
 
         Map<String, String> fieldMap = new HashMap<>();
 
-        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs().values()) {
+        for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
             if (!fieldConfig.isPrimary()) {
                 fieldMap.put(fieldConfig.getFieldName(), runGetter(fieldConfig));
             }
@@ -223,21 +226,26 @@ public class Dao<T extends BaseEntity<T>> {
         return sql.toString();
     }
 
-    private String buildUpdate() {
+    private String buildUpdate(int id) {
         StringBuilder sql = new StringBuilder();
+        String where = "";
         sql.append("UPDATE ").append(this.entity.tableName()).append(" SET ");
 
         boolean firstField = true;
-        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs().values()) {
-            if (fieldConfig.isPrimary()) {
+        for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
+            if (!fieldConfig.isPrimary()) {
                 if (firstField) {
                     sql.append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
                     firstField = false;
                 } else {
                     sql.append(", ").append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
                 }
+            } else {
+                where = " WHERE " + fieldConfig.getFieldName() + " = '" + id + "'";
             }
         }
+
+        sql.append(where);
 
         return sql.toString();
     }
@@ -283,34 +291,12 @@ public class Dao<T extends BaseEntity<T>> {
         return tableConfig;
     }
 
-    private String runGetter(FieldConfig fieldConfig) {
+    private String runGetter(FieldConfig<T> fieldConfig) {
         try {
-            Object object = fieldConfig.getGet().invoke(entityObject);
+            Object object = fieldConfig.getFieldValue(entityObject);
             return object.toString();
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            LogUtil.error("Dao.java:279 | " + e.getMessage());
-        }
-        return null;
-    }
-
-    private Method findGetter(java.lang.reflect.Field field) {
-        for (Method method : tClass.getMethods()) {
-            if ((method.getName().startsWith("get")) && (method.getName().length() == (field.getName().length() + 3))) {
-                if (method.getName().toLowerCase().endsWith(field.getName().toLowerCase())) {
-                    return method;
-                }
-            }
-        }
-        return null;
-    }
-
-    private Method findSetter(java.lang.reflect.Field field) {
-        for (Method method : tClass.getMethods()) {
-            if ((method.getName().startsWith("get")) && (method.getName().length() == (field.getName().length() + 3))) {
-                if (method.getName().toLowerCase().endsWith(field.getName().toLowerCase())) {
-                    return method;
-                }
-            }
+        } catch (IllegalAccessException e) {
+            LogUtil.error("Error running getter!!" + e.getMessage());
         }
         return null;
     }

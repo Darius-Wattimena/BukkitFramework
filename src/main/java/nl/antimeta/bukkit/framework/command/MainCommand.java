@@ -43,7 +43,7 @@ public class MainCommand implements CommandExecutor {
             return executor.onCommand(sender, cmd, label, removeFirstArg(args));
         } else {
             sender.sendMessage(ChatColor.GREEN + "Plugin made by " + auteur);
-            sender.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/" + name +" help " + ChatColor.GREEN + "to see help for the plugin.");
+            sender.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/" + name +" help " + ChatColor.GREEN + "to see help for this plugin.");
             return true;
         }
     }

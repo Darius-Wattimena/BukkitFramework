@@ -1,15 +1,14 @@
 package nl.antimeta.bukkit.framework.database.model;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 
-public class FieldConfig {
+public class FieldConfig<T> {
     private String fieldName;
     private boolean primary;
     private FieldType fieldType;
     private int size;
     private int digitSize;
-    private Method get;
-    private Method set;
+    private Field field;
 
     public String getFieldName() {
         return fieldName;
@@ -51,19 +50,18 @@ public class FieldConfig {
         this.digitSize = digitSize;
     }
 
-    public Method getGet() {
-        return get;
+    public Field getField() {
+        return field;
     }
 
-    public void setGet(Method get) {
-        this.get = get;
+    public void setField(Field field) {
+        this.field = field;
     }
 
-    public Method getSet() {
-        return set;
-    }
-
-    public void setSet(Method set) {
-        this.set = set;
+    public Object getFieldValue(T entity) throws IllegalAccessException {
+        if (!field.isAccessible()) {
+            field.setAccessible(true);
+        }
+        return field.get(entity);
     }
 }

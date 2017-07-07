@@ -5,10 +5,10 @@ import nl.antimeta.bukkit.framework.database.type.DatabaseType;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TableConfig {
+public class TableConfig<T> {
     private String tableName;
     private DatabaseType databaseType;
-    private Map<String, FieldConfig> fieldConfigs;
+    private Map<String, FieldConfig<T>> fieldConfigs;
 
     public TableConfig() {
         fieldConfigs = new HashMap<>();
@@ -30,12 +30,12 @@ public class TableConfig {
         this.databaseType = databaseType;
     }
 
-    public Map<String, FieldConfig> getFieldConfigs() {
+    public Map<String, FieldConfig<T>> getFieldConfigs() {
         return fieldConfigs;
     }
 
-    public FieldConfig getPrimaryFieldConfig() {
-        for (FieldConfig fieldConfig : fieldConfigs.values()) {
+    public FieldConfig<T> getPrimaryFieldConfig() {
+        for (FieldConfig<T> fieldConfig : fieldConfigs.values()) {
             if (fieldConfig.isPrimary()) {
                 return fieldConfig;
             }
