@@ -22,6 +22,13 @@ public @interface Field {
     boolean primary() default false;
 
     /**
+     * Set this to true when the target field is a foreign key.
+     */
+    boolean foreign() default false;
+
+    boolean foreignAutoLoad() default false;
+
+    /**
      * Set this to true if the database value can be null.
      */
     boolean nullable() default false;

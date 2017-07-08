@@ -21,6 +21,8 @@ public class Database {
     private DatabaseType databaseType;
     private final Resource resource;
 
+    private DaoManger daoManger = new DaoManger(this);
+
     public Database(DatabaseType databaseType, Resource resource) {
         this.databaseType = databaseType;
         this.resource = resource;
@@ -126,5 +128,13 @@ public class Database {
 
     public DatabaseType getDatabaseType() {
         return databaseType;
+    }
+
+    public DaoManger getDaoManger() {
+        return daoManger;
+    }
+
+    public void setDaoManger(DaoManger daoManger) {
+        this.daoManger = daoManger;
     }
 }

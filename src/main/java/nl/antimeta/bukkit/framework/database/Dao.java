@@ -58,6 +58,14 @@ public class Dao<T extends BaseEntity> {
                 fieldConfig.setPrimary(field.primary());
                 fieldConfig.setSize(field.size());
                 fieldConfig.setDigitSize(field.digitSize());
+
+                fieldConfig.setForeign(field.foreign());
+                if (fieldConfig.isForeign()) {
+                    fieldConfig.setForeignClass(entityField.getClass());
+                    fieldConfig.setForeignDao(database.getDaoManger().findDao(entityField.getType()));
+                    fieldConfig.setForeignAutoLoad(field.foreignAutoLoad());
+                }
+
                 tableConfig.getFieldConfigs().put(fieldName, fieldConfig);
             }
         }
@@ -148,7 +156,18 @@ public class Dao<T extends BaseEntity> {
             while (resultSet.next()) {
                 T result = tClass.newInstance();
                 for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
-                    fieldConfig.setFieldValue(result, resultSet.getObject(fieldConfig.getFieldName()));
+                    if (fieldConfig.isForeign()) {
+                        if (fieldConfig.isForeignAutoLoad()) {
+                            List<?> foreignResult = fieldConfig.getForeignDao().find((Number) resultSet.getObject(fieldConfig.getFieldName()));
+
+                            if (!foreignResult.isEmpty()) {
+                                fieldConfig.setFieldValue(result, foreignResult.get(0));
+                            }
+                        }
+                    } else {
+                        Object resultFieldValue = resultSet.getObject(fieldConfig.getFieldName());
+                        fieldConfig.setFieldValue(result, fieldConfig.getField().getType().cast(resultFieldValue));
+                    }
                 }
                 results.add(result);
             }

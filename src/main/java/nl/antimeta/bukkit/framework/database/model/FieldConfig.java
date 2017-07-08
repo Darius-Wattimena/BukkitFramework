@@ -1,5 +1,8 @@
 package nl.antimeta.bukkit.framework.database.model;
 
+import nl.antimeta.bukkit.framework.database.Dao;
+import nl.antimeta.bukkit.framework.util.LogUtil;
+
 import java.lang.reflect.Field;
 
 public class FieldConfig<T> {
@@ -9,6 +12,10 @@ public class FieldConfig<T> {
     private int size;
     private int digitSize;
     private Field field;
+    private boolean foreign;
+    private boolean foreignAutoLoad;
+    private Class<?> foreignClass;
+    private Dao<?> foreignDao;
 
     public String getFieldName() {
         return fieldName;
@@ -64,7 +71,42 @@ public class FieldConfig<T> {
     }
 
     public void setFieldValue(T entity, Object value) throws IllegalAccessException {
+        if (value == null) {
+            LogUtil.error("value is null");
+        }
         field.setAccessible(true);
         field.set(entity, value);
+    }
+
+    public boolean isForeign() {
+        return foreign;
+    }
+
+    public void setForeign(boolean foreign) {
+        this.foreign = foreign;
+    }
+
+    public Class<?> getForeignClass() {
+        return foreignClass;
+    }
+
+    public void setForeignClass(Class<?> foreignClass) {
+        this.foreignClass = foreignClass;
+    }
+
+    public Dao<?> getForeignDao() {
+        return foreignDao;
+    }
+
+    public void setForeignDao(Dao<?> foreignDao) {
+        this.foreignDao = foreignDao;
+    }
+
+    public boolean isForeignAutoLoad() {
+        return foreignAutoLoad;
+    }
+
+    public void setForeignAutoLoad(boolean foreignAutoLoad) {
+        this.foreignAutoLoad = foreignAutoLoad;
     }
 }
