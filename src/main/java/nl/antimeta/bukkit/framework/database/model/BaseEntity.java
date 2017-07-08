@@ -5,8 +5,8 @@ import java.util.List;
 
 public abstract class BaseEntity<T> {
 
-    public abstract Integer getId();
-    public abstract void setId(Integer id);
+    public abstract Number getId();
+    public abstract void setId(Number id);
 
     public abstract List<T> buildResultSet(ResultSet resultSet);
 }

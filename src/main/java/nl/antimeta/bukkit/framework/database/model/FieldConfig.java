@@ -59,9 +59,7 @@ public class FieldConfig<T> {
     }
 
     public Object getFieldValue(T entity) throws IllegalAccessException {
-        if (!field.isAccessible()) {
-            field.setAccessible(true);
-        }
+        field.setAccessible(true);
         return field.get(entity);
     }
 }

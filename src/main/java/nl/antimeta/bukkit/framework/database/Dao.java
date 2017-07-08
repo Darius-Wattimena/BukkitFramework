@@ -74,7 +74,7 @@ public class Dao<T extends BaseEntity<T>> {
         return stmt.execute();
     }
 
-    public List<T> find(int id) throws SQLException {
+    public List<T> find(Number id) throws SQLException {
         String sql = buildFindPrimaryKeySql(id);
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
@@ -120,7 +120,7 @@ public class Dao<T extends BaseEntity<T>> {
         return delete(entity.getId());
     }
 
-    public boolean delete(Integer id) throws SQLException {
+    public boolean delete(Number id) throws SQLException {
         if (id != null) {
             String sql = buildDelete(id);
             LogUtil.info(sql);
@@ -151,7 +151,7 @@ public class Dao<T extends BaseEntity<T>> {
         return null;
     }
 
-    private String buildFindPrimaryKeySql(int id) {
+    private String buildFindPrimaryKeySql(Number id) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT * FROM ").append(tableConfig.getTableName()).append("\n");
 
@@ -164,10 +164,8 @@ public class Dao<T extends BaseEntity<T>> {
     }
 
     private String buildFind(String field, Object value) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM ").append(tableConfig.getTableName()).append("\n");
-        sql.append(" WHERE ").append(field).append(" = '").append(value).append("'");
-        return sql.toString();
+        return "SELECT * FROM " + tableConfig.getTableName() + "\n" +
+                " WHERE " + field + " = '" + value + "'";
     }
 
     private String buildFind(Map<String, Object> parameters) {
@@ -226,7 +224,7 @@ public class Dao<T extends BaseEntity<T>> {
         return sql.toString();
     }
 
-    private String buildUpdate(int id) {
+    private String buildUpdate(Number id) {
         StringBuilder sql = new StringBuilder();
         String where = "";
         sql.append("UPDATE ").append(this.entity.tableName()).append(" SET ");
@@ -250,7 +248,7 @@ public class Dao<T extends BaseEntity<T>> {
         return sql.toString();
     }
 
-    private String buildDelete(int id) {
+    private String buildDelete(Number id) {
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ").append(tableConfig.getTableName());
         for (FieldConfig fieldConfig : tableConfig.getFieldConfigs().values()) {
@@ -264,10 +262,8 @@ public class Dao<T extends BaseEntity<T>> {
     }
 
     private String buildDelete(String field, Object value) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("DELETE FROM ").append(tableConfig.getTableName());
-        sql.append(" WHERE ").append(field).append(" = '").append(value).append("'");
-        return sql.toString();
+        return "DELETE FROM " + tableConfig.getTableName() +
+                " WHERE " + field + " = '" + value + "'";
     }
 
     private String buildDelete(Map<String, Object> parameters) {
@@ -294,7 +290,11 @@ public class Dao<T extends BaseEntity<T>> {
     private String runGetter(FieldConfig<T> fieldConfig) {
         try {
             Object object = fieldConfig.getFieldValue(entityObject);
-            return object.toString();
+            if (object != null) {
+                return object.toString();
+            } else {
+                return null;
+            }
         } catch (IllegalAccessException e) {
             LogUtil.error("Error running getter!!" + e.getMessage());
         }
