@@ -5,11 +5,8 @@ import nl.antimeta.bukkit.framework.database.annotation.Field;
 import nl.antimeta.bukkit.framework.database.model.BaseEntity;
 import nl.antimeta.bukkit.framework.database.model.FieldType;
 
-import java.sql.ResultSet;
-import java.util.List;
-
 @Entity(tableName = "test_entity")
-public class TestEntity extends BaseEntity<TestEntity> {
+public class TestEntity extends BaseEntity {
 
     @Field(fieldName = "id", fieldType = FieldType.Integer, primary = true)
     private Integer id;
@@ -34,8 +31,4 @@ public class TestEntity extends BaseEntity<TestEntity> {
         this.name = name;
     }
 
-    @Override
-    public List<TestEntity> buildResultSet(ResultSet resultSet) {
-        return null;
-    }
 }

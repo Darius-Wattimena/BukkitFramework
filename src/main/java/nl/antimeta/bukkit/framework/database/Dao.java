@@ -8,16 +8,15 @@ import nl.antimeta.bukkit.framework.database.model.TableConfig;
 import nl.antimeta.bukkit.framework.util.LogUtil;
 import org.apache.commons.lang.StringUtils;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Dao<T extends BaseEntity<T>> {
+public class Dao<T extends BaseEntity> {
 
     private Database database;
     private TableConfig<T> tableConfig;
@@ -38,7 +37,7 @@ public class Dao<T extends BaseEntity<T>> {
     }
 
     private void initFieldConfig() {
-        for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
+        for (java.lang.reflect.Field entityField : tClass.getFields()) {
             Field field = entityField.getAnnotation(Field.class);
             if (field != null) {
                 if (!entityField.isAccessible()) {
@@ -144,8 +143,18 @@ public class Dao<T extends BaseEntity<T>> {
 
     private List<T> processResultSet(ResultSet resultSet) {
         try {
-            return tClass.newInstance().buildResultSet(resultSet);
-        } catch (InstantiationException | IllegalAccessException e) {
+            List<T> results = new ArrayList<>();
+
+            while (resultSet.next()) {
+                T result = tClass.newInstance();
+                for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
+                    fieldConfig.setFieldValue(result, resultSet.getObject(fieldConfig.getFieldName()));
+                }
+                results.add(result);
+            }
+
+            return results;
+        } catch (InstantiationException | SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
         return null;
