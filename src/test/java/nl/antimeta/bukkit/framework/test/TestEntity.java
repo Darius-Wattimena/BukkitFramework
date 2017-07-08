@@ -22,7 +22,6 @@ public class TestEntity extends BaseEntity<TestEntity> {
         return id;
     }
 
-    @Override
     public void setId(Integer id) {
         this.id = id;
     }
