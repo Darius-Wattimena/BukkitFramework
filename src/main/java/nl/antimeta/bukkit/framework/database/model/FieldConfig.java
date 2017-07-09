@@ -14,6 +14,7 @@ public class FieldConfig<T> {
     private Field field;
     private boolean foreign;
     private boolean foreignAutoLoad;
+    private boolean foreignAutoSave;
     private Class<?> foreignClass;
     private Dao<?> foreignDao;
 
@@ -71,9 +72,6 @@ public class FieldConfig<T> {
     }
 
     public void setFieldValue(T entity, Object value) throws IllegalAccessException {
-        if (value == null) {
-            LogUtil.error("value is null");
-        }
         field.setAccessible(true);
         field.set(entity, value);
     }
@@ -108,5 +106,13 @@ public class FieldConfig<T> {
 
     public void setForeignAutoLoad(boolean foreignAutoLoad) {
         this.foreignAutoLoad = foreignAutoLoad;
+    }
+
+    public boolean isForeignAutoSave() {
+        return foreignAutoSave;
+    }
+
+    public void setForeignAutoSave(boolean foreignAutoSave) {
+        this.foreignAutoSave = foreignAutoSave;
     }
 }

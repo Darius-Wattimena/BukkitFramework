@@ -25,6 +25,7 @@ public class Dao<T extends BaseEntity> {
     private T entityObject;
 
     public Dao(Database database, Class<T> tClass) throws Exception {
+        database.getDaoManger().registerDao(tClass, this);
         this.database = database;
         this.tClass = tClass;
         entity = tClass.getAnnotation(Entity.class);
@@ -37,12 +38,10 @@ public class Dao<T extends BaseEntity> {
     }
 
     private void initFieldConfig() {
-        for (java.lang.reflect.Field entityField : tClass.getFields()) {
+        for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
             Field field = entityField.getAnnotation(Field.class);
             if (field != null) {
-                if (!entityField.isAccessible()) {
-                    entityField.setAccessible(true);
-                }
+                entityField.setAccessible(true);
 
                 String fieldName;
                 if (StringUtils.isBlank(field.fieldName())) {
@@ -64,6 +63,7 @@ public class Dao<T extends BaseEntity> {
                     fieldConfig.setForeignClass(entityField.getClass());
                     fieldConfig.setForeignDao(database.getDaoManger().findDao(entityField.getType()));
                     fieldConfig.setForeignAutoLoad(field.foreignAutoLoad());
+                    fieldConfig.setForeignAutoSave(field.foreignAutoSave());
                 }
 
                 tableConfig.getFieldConfigs().put(fieldName, fieldConfig);
@@ -159,13 +159,13 @@ public class Dao<T extends BaseEntity> {
                     if (fieldConfig.isForeign()) {
                         if (fieldConfig.isForeignAutoLoad()) {
                             List<?> foreignResult = fieldConfig.getForeignDao().find((Number) resultSet.getObject(fieldConfig.getFieldName()));
-
                             if (!foreignResult.isEmpty()) {
                                 fieldConfig.setFieldValue(result, foreignResult.get(0));
                             }
                         }
                     } else {
                         Object resultFieldValue = resultSet.getObject(fieldConfig.getFieldName());
+                        LogUtil.error(resultFieldValue.toString());
                         fieldConfig.setFieldValue(result, fieldConfig.getField().getType().cast(resultFieldValue));
                     }
                 }
@@ -259,7 +259,13 @@ public class Dao<T extends BaseEntity> {
 
         boolean firstField = true;
         for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
-            if (!fieldConfig.isPrimary()) {
+            if (fieldConfig.isForeign() && fieldConfig.isForeignAutoSave()) {
+                try {
+                    database.getDaoManger().findDao(fieldConfig.getField().getType()).save((BaseEntity) fieldConfig.getFieldValue(entityObject));
+                } catch (SQLException | IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            } else if (!fieldConfig.isPrimary()) {
                 if (firstField) {
                     sql.append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
                     firstField = false;

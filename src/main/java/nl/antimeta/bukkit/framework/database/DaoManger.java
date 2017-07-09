@@ -1,6 +1,7 @@
 package nl.antimeta.bukkit.framework.database;
 
 import nl.antimeta.bukkit.framework.database.model.BaseEntity;
+import nl.antimeta.bukkit.framework.util.LogUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,14 @@ public class DaoManger {
     }
 
     public <T extends BaseEntity> void registerDao(Class<T> tClass, Dao<T> tDao) {
-        daoMap.put(tClass, tDao);
+        if (!daoMap.containsKey(tClass)) {
+            LogUtil.info("Register Dao " + tClass.getSimpleName());
+            daoMap.put(tClass, tDao);
+        }
+    }
+
+    public <T extends BaseEntity> boolean checkIfDaoExists(Class<T> tClass) {
+        return daoMap.containsKey(tClass);
     }
 
     public <T extends BaseEntity> Dao<T> findDao(Class<?> tClass) {

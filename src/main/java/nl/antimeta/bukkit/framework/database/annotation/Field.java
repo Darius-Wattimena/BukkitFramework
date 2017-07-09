@@ -28,6 +28,8 @@ public @interface Field {
 
     boolean foreignAutoLoad() default false;
 
+    boolean foreignAutoSave() default false;
+
     /**
      * Set this to true if the database value can be null.
      */
