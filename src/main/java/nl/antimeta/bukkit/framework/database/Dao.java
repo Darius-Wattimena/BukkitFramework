@@ -63,7 +63,6 @@ public class Dao<T extends BaseEntity> {
                     fieldConfig.setForeignClass(entityField.getClass());
                     fieldConfig.setForeignDao(database.getDaoManger().findDao(entityField.getType()));
                     fieldConfig.setForeignAutoLoad(field.foreignAutoLoad());
-                    fieldConfig.setForeignAutoSave(field.foreignAutoSave());
                 }
 
                 tableConfig.getFieldConfigs().put(fieldName, fieldConfig);
@@ -165,7 +164,6 @@ public class Dao<T extends BaseEntity> {
                         }
                     } else {
                         Object resultFieldValue = resultSet.getObject(fieldConfig.getFieldName());
-                        LogUtil.error(resultFieldValue.toString());
                         fieldConfig.setFieldValue(result, fieldConfig.getField().getType().cast(resultFieldValue));
                     }
                 }
@@ -224,7 +222,14 @@ public class Dao<T extends BaseEntity> {
         Map<String, String> fieldMap = new HashMap<>();
 
         for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
-            if (!fieldConfig.isPrimary()) {
+            if (fieldConfig.isForeign()) {
+                try {
+                    BaseEntity foreignValue = (BaseEntity) fieldConfig.getFieldValue(entityObject);
+                    fieldMap.put(fieldConfig.getFieldName(), String.valueOf(foreignValue.getId()));
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            } else if (!fieldConfig.isPrimary()) {
                 fieldMap.put(fieldConfig.getFieldName(), runGetter(fieldConfig));
             }
         }
@@ -258,23 +263,29 @@ public class Dao<T extends BaseEntity> {
         sql.append("UPDATE ").append(this.entity.tableName()).append(" SET ");
 
         boolean firstField = true;
-        for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
-            if (fieldConfig.isForeign() && fieldConfig.isForeignAutoSave()) {
-                try {
-                    database.getDaoManger().findDao(fieldConfig.getField().getType()).save((BaseEntity) fieldConfig.getFieldValue(entityObject));
-                } catch (SQLException | IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            } else if (!fieldConfig.isPrimary()) {
-                if (firstField) {
-                    sql.append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
-                    firstField = false;
+        try {
+            for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
+                if (fieldConfig.isForeign()) {
+                    BaseEntity foreignValue = (BaseEntity) fieldConfig.getFieldValue(entityObject);
+                    if (firstField) {
+                        sql.append(fieldConfig.getFieldName()).append(" = ").append(foreignValue.getId());
+                        firstField = false;
+                    } else {
+                        sql.append(", ").append(fieldConfig.getFieldName()).append(" = ").append(foreignValue.getId());
+                    }
+                } else if (!fieldConfig.isPrimary()) {
+                    if (firstField) {
+                        sql.append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
+                        firstField = false;
+                    } else {
+                        sql.append(", ").append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
+                    }
                 } else {
-                    sql.append(", ").append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
+                    where = " WHERE " + fieldConfig.getFieldName() + " = '" + id + "'";
                 }
-            } else {
-                where = " WHERE " + fieldConfig.getFieldName() + " = '" + id + "'";
             }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
 
         sql.append(where);

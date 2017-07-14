@@ -2,6 +2,7 @@ package nl.antimeta.bukkit.framework.database.model;
 
 import nl.antimeta.bukkit.framework.database.Dao;
 import nl.antimeta.bukkit.framework.util.LogUtil;
+import nl.antimeta.bukkit.framework.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
 
@@ -14,7 +15,6 @@ public class FieldConfig<T> {
     private Field field;
     private boolean foreign;
     private boolean foreignAutoLoad;
-    private boolean foreignAutoSave;
     private Class<?> foreignClass;
     private Dao<?> foreignDao;
 
@@ -71,9 +71,8 @@ public class FieldConfig<T> {
         return field.get(entity);
     }
 
-    public void setFieldValue(T entity, Object value) throws IllegalAccessException {
-        field.setAccessible(true);
-        field.set(entity, value);
+    public void setFieldValue(T entity, Object value) {
+        ReflectionUtil.setField(field, entity, value);
     }
 
     public boolean isForeign() {
@@ -106,13 +105,5 @@ public class FieldConfig<T> {
 
     public void setForeignAutoLoad(boolean foreignAutoLoad) {
         this.foreignAutoLoad = foreignAutoLoad;
-    }
-
-    public boolean isForeignAutoSave() {
-        return foreignAutoSave;
-    }
-
-    public void setForeignAutoSave(boolean foreignAutoSave) {
-        this.foreignAutoSave = foreignAutoSave;
     }
 }
