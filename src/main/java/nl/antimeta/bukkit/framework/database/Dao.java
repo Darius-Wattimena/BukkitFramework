@@ -101,6 +101,13 @@ public class Dao<T extends BaseEntity> {
         return processResultSet(resultSet);
     }
 
+    public List<T> findAll() throws SQLException {
+        String sql = buildFindAll();
+        LogUtil.info(sql);
+        ResultSet resultSet = execute(sql);
+        return processResultSet(resultSet);
+    }
+
     private boolean create() throws SQLException {
         String sql = buildInsert();
         LogUtil.info(sql);
@@ -213,6 +220,10 @@ public class Dao<T extends BaseEntity> {
         }
 
         return sql.toString();
+    }
+
+    private String buildFindAll() {
+        return "SELECT * FROM " + entity.tableName();
     }
 
     private String buildInsert() {
