@@ -17,7 +17,7 @@ public class SqlBuilder<T extends BaseEntity> {
     private T entityObject;
     private TableConfig<T> tableConfig;
     private Map<String, Object> parameters = new HashMap<>();
-    private int deleteId;
+    private int id;
 
     private String selectRange = "*";
 
@@ -25,11 +25,6 @@ public class SqlBuilder<T extends BaseEntity> {
     private boolean insertStatement = false;
     private boolean updateStatement = false;
     private boolean deleteStatement = false;
-
-
-    public SqlBuilder(Entity entity) {
-        this.entity = entity;
-    }
 
     public SqlBuilder(Entity entity, TableConfig<T> tableConfig, T entityObject) {
         this.entity = entity;
@@ -39,6 +34,12 @@ public class SqlBuilder<T extends BaseEntity> {
 
     public void addParameter(String key, Object value) {
         parameters.put(key, value);
+    }
+
+    public void addParameters(Map<String, Object> parameters) {
+        for (Map.Entry<String, Object> set : parameters.entrySet()) {
+            this.parameters.put(set.getKey(), set.getValue());
+        }
     }
 
     public String build() {
@@ -68,8 +69,17 @@ public class SqlBuilder<T extends BaseEntity> {
                     sql.append(" AND ").append(set.getKey()).append(" = '").append(set.getValue()).append("'\n");
                 }
             }
+            return sql.toString();
+        } else if (id != 0) {
+            sql.append("SELECT * FROM ").append(tableConfig.getTableName()).append("\n");
+
+            FieldConfig fieldConfig = tableConfig.getPrimaryFieldConfig();
+            if (fieldConfig != null) {
+                sql.append(" WHERE ").append(fieldConfig.getFieldName()).append(" = '").append(id).append("'");
+                return sql.toString();
+            }
         }
-        return sql.toString();
+        return null;
     }
 
     private String buildInsertStatement() {
@@ -154,7 +164,7 @@ public class SqlBuilder<T extends BaseEntity> {
 
         for (FieldConfig fieldConfig : tableConfig.getFieldConfigs().values()) {
             if (fieldConfig.isPrimary()) {
-                sql.append(" WHERE ").append(fieldConfig.getFieldName()).append(" = '").append(deleteId).append("'");
+                sql.append(" WHERE ").append(fieldConfig.getFieldName()).append(" = '").append(id).append("'");
                 return sql.toString();
             }
         }
@@ -198,23 +208,23 @@ public class SqlBuilder<T extends BaseEntity> {
         this.selectRange = selectRange;
     }
 
-    public void setSelectStatement(boolean selectStatement) {
-        this.selectStatement = selectStatement;
+    public void setSelectStatement() {
+        this.selectStatement = true;
     }
 
-    public void setInsertStatement(boolean insertStatement) {
-        this.insertStatement = insertStatement;
+    public void setInsertStatement() {
+        this.insertStatement = true;
     }
 
-    public void setUpdateStatement(boolean updateStatement) {
-        this.updateStatement = updateStatement;
+    public void setUpdateStatement() {
+        this.updateStatement = true;
     }
 
-    public void setDeleteStatement(boolean deleteStatement) {
-        this.deleteStatement = deleteStatement;
+    public void setDeleteStatement() {
+        this.deleteStatement = true;
     }
 
-    public void setDeleteId(int deleteId) {
-        this.deleteId = deleteId;
+    public void setId(int id) {
+        this.id = id;
     }
 }

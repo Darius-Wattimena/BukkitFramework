@@ -12,7 +12,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -81,41 +80,62 @@ public class Dao<T extends BaseEntity> {
     }
 
     public List<T> find(Number id) throws SQLException {
-        String sql = buildFindPrimaryKeySql(id);
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
+        sqlBuilder.setSelectStatement();
+        sqlBuilder.setId(id.intValue());
+
+        String sql = sqlBuilder.build();
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
     public List<T> find(String field, Object value) throws SQLException {
-        String sql = buildFind(field, value);
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
+        sqlBuilder.addParameter(field, value);
+        sqlBuilder.setSelectStatement();
+
+        String sql = sqlBuilder.build();
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
     public List<T> find(Map<String, Object> parameters) throws SQLException {
-        String sql = buildFind(parameters);
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
+        sqlBuilder.setSelectStatement();
+        sqlBuilder.addParameters(parameters);
+
+        String sql = sqlBuilder.build();
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
     public List<T> findAll() throws SQLException {
-        String sql = buildFindAll();
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
+        sqlBuilder.setSelectStatement();
+
+        String sql = sqlBuilder.build();
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
     private boolean create() throws SQLException {
-        String sql = buildInsert();
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, entityObject);
+        sqlBuilder.setInsertStatement();
+
+        String sql = sqlBuilder.build();
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
     private boolean update(T entity) throws SQLException {
-        String sql = buildUpdate(entity.getId());
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(this.entity, tableConfig, entityObject);
+        sqlBuilder.setUpdateStatement();
+
+        String sql = sqlBuilder.build();
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
@@ -135,7 +155,11 @@ public class Dao<T extends BaseEntity> {
 
     public boolean delete(Number id) throws SQLException {
         if (id != null) {
-            String sql = buildDelete(id);
+            SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
+            sqlBuilder.setDeleteStatement();
+            sqlBuilder.setId(id.intValue());
+
+            String sql = sqlBuilder.build();
             LogUtil.info(sql);
             return executeNoResult(sql);
         }
@@ -144,13 +168,21 @@ public class Dao<T extends BaseEntity> {
     }
 
     public boolean delete(String field, Object value) throws SQLException {
-        String sql = buildDelete(field, value);
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
+        sqlBuilder.setDeleteStatement();
+        sqlBuilder.addParameter(field, value);
+
+        String sql = sqlBuilder.build();
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
     public boolean delete(Map<String, Object> parameters) throws SQLException {
-        String sql = buildDelete(parameters);
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
+        sqlBuilder.setDeleteStatement();
+        sqlBuilder.addParameters(parameters);
+
+        String sql = sqlBuilder.build();
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
@@ -182,161 +214,6 @@ public class Dao<T extends BaseEntity> {
             e.printStackTrace();
         }
         return null;
-    }
-
-    private String buildFindPrimaryKeySql(Number id) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM ").append(tableConfig.getTableName()).append("\n");
-
-        FieldConfig fieldConfig = tableConfig.getPrimaryFieldConfig();
-        if (fieldConfig != null) {
-            sql.append(" WHERE ").append(fieldConfig.getFieldName()).append(" = '").append(id).append("'");
-            return sql.toString();
-        }
-        return null;
-    }
-
-    private String buildFind(String field, Object value) {
-        return "SELECT * FROM " + tableConfig.getTableName() + "\n" +
-                " WHERE " + field + " = '" + value + "'";
-    }
-
-    private String buildFind(Map<String, Object> parameters) {
-        if (parameters.isEmpty()) {
-            return null;
-        }
-
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM ").append(entity.tableName()).append("\n");
-
-        boolean first = true;
-        for (Map.Entry<String, Object> set : parameters.entrySet()) {
-            if (first) {
-                sql.append(" WHERE ").append(set.getKey()).append(" = '").append(set.getValue()).append("'\n");
-                first = false;
-            } else {
-                sql.append(" AND ").append(set.getKey()).append(" = '").append(set.getValue()).append("'\n");
-            }
-        }
-
-        return sql.toString();
-    }
-
-    private String buildFindAll() {
-        return "SELECT * FROM " + entity.tableName();
-    }
-
-    private String buildInsert() {
-        StringBuilder sql = new StringBuilder();
-        sql.append("INSERT INTO ").append(tableConfig.getTableName()).append(" \n");
-
-        Map<String, String> fieldMap = new HashMap<>();
-
-        for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
-            if (fieldConfig.isForeign()) {
-                try {
-                    BaseEntity foreignValue = (BaseEntity) fieldConfig.getFieldValue(entityObject);
-                    fieldMap.put(fieldConfig.getFieldName(), String.valueOf(foreignValue.getId()));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            } else if (!fieldConfig.isPrimary()) {
-                fieldMap.put(fieldConfig.getFieldName(), runGetter(fieldConfig));
-            }
-        }
-
-        StringBuilder fieldNames = new StringBuilder("(");
-        StringBuilder fieldValues = new StringBuilder("VALUES (");
-        boolean firstField = true;
-        for (Map.Entry<String, String> entry : fieldMap.entrySet()) {
-            if (firstField) {
-                fieldNames.append(entry.getKey());
-                fieldValues.append("'").append(entry.getValue()).append("'");
-                firstField = false;
-            } else {
-                fieldNames.append(", ").append(entry.getKey());
-                fieldValues.append(", '").append(entry.getValue()).append("'");
-            }
-        }
-
-        fieldNames.append(") ");
-        fieldValues.append(") ");
-
-        sql.append(fieldNames).append("\n");
-        sql.append(fieldValues);
-
-        return sql.toString();
-    }
-
-    private String buildUpdate(Number id) {
-        StringBuilder sql = new StringBuilder();
-        String where = "";
-        sql.append("UPDATE ").append(this.entity.tableName()).append(" SET ");
-
-        boolean firstField = true;
-        try {
-            for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
-                if (fieldConfig.isForeign()) {
-                    BaseEntity foreignValue = (BaseEntity) fieldConfig.getFieldValue(entityObject);
-                    if (firstField) {
-                        sql.append(fieldConfig.getFieldName()).append(" = ").append(foreignValue.getId());
-                        firstField = false;
-                    } else {
-                        sql.append(", ").append(fieldConfig.getFieldName()).append(" = ").append(foreignValue.getId());
-                    }
-                } else if (!fieldConfig.isPrimary()) {
-                    if (firstField) {
-                        sql.append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
-                        firstField = false;
-                    } else {
-                        sql.append(", ").append(fieldConfig.getFieldName()).append(" = ").append(runGetter(fieldConfig));
-                    }
-                } else {
-                    where = " WHERE " + fieldConfig.getFieldName() + " = '" + id + "'";
-                }
-            }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-
-        sql.append(where);
-
-        return sql.toString();
-    }
-
-    private String buildDelete(Number id) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("DELETE FROM ").append(tableConfig.getTableName());
-        for (FieldConfig fieldConfig : tableConfig.getFieldConfigs().values()) {
-            if (fieldConfig.isPrimary()) {
-                sql.append(" WHERE ").append(fieldConfig.getFieldName()).append(" = '").append(id).append("'");
-                return sql.toString();
-            }
-        }
-
-        return null;
-    }
-
-    private String buildDelete(String field, Object value) {
-        return "DELETE FROM " + tableConfig.getTableName() +
-                " WHERE " + field + " = '" + value + "'";
-    }
-
-    private String buildDelete(Map<String, Object> parameters) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("DELETE FROM ").append(tableConfig.getTableName());
-
-        boolean first = true;
-        for (Map.Entry<String, Object> set : parameters.entrySet()) {
-            if (first) {
-                sql.append(" WHERE ").append(set.getKey()).append(" = '").append(set.getValue()).append("'");
-                first = false;
-            } else {
-                sql.append(" AND ").append(set.getKey()).append(" = '").append(set.getValue()).append("'");
-            }
-        }
-
-        return sql.toString();
     }
 
     public TableConfig getTableConfig() {
