@@ -30,6 +30,18 @@ public class JsonMessage {
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " " + json);
     }
 
+    private void send(Selector selector, String json) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + selector.buildSelector() + " " + json);
+    }
+
+    private void sendAll(String json) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw @a " + json);
+    }
+
+    private void sendRandom(String json) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw @r " + json);
+    }
+
     public void send(Iterable<Player> players) {
         String json = buildJson();
         for (Player player : players) {
