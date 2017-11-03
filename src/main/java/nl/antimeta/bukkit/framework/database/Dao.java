@@ -80,43 +80,39 @@ public class Dao<T extends BaseEntity> {
     }
 
     public List<T> find(Number id) throws SQLException {
-        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
-        sqlBuilder.setSelectStatement();
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig);
         sqlBuilder.setId(id.intValue());
 
-        String sql = sqlBuilder.build();
+        String sql = sqlBuilder.build(StatementType.SELECT);
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
     public List<T> find(String field, Object value) throws SQLException {
-        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig);
         sqlBuilder.addParameter(field, value);
-        sqlBuilder.setSelectStatement();
 
-        String sql = sqlBuilder.build();
+        String sql = sqlBuilder.build(StatementType.SELECT);
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
     public List<T> find(Map<String, Object> parameters) throws SQLException {
-        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
-        sqlBuilder.setSelectStatement();
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig);
         sqlBuilder.addParameters(parameters);
 
-        String sql = sqlBuilder.build();
+        String sql = sqlBuilder.build(StatementType.SELECT);
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
 
     public List<T> findAll() throws SQLException {
-        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
-        sqlBuilder.setSelectStatement();
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig);
 
-        String sql = sqlBuilder.build();
+        String sql = sqlBuilder.build(StatementType.SELECT);
         LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
@@ -124,18 +120,16 @@ public class Dao<T extends BaseEntity> {
 
     private boolean create() throws SQLException {
         SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, entityObject);
-        sqlBuilder.setInsertStatement();
 
-        String sql = sqlBuilder.build();
+        String sql = sqlBuilder.build(StatementType.INSERT);
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
-    private boolean update(T entity) throws SQLException {
-        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(this.entity, tableConfig, entityObject);
-        sqlBuilder.setUpdateStatement();
+    private boolean update() throws SQLException {
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, entityObject);
 
-        String sql = sqlBuilder.build();
+        String sql = sqlBuilder.build(StatementType.UPDATE);
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
@@ -145,7 +139,7 @@ public class Dao<T extends BaseEntity> {
         if (entity.getId() == null) {
             return create();
         } else {
-            return update(entity);
+            return update();
         }
     }
 
@@ -155,11 +149,10 @@ public class Dao<T extends BaseEntity> {
 
     public boolean delete(Number id) throws SQLException {
         if (id != null) {
-            SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
-            sqlBuilder.setDeleteStatement();
+            SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig);
             sqlBuilder.setId(id.intValue());
 
-            String sql = sqlBuilder.build();
+            String sql = sqlBuilder.build(StatementType.DELETE);
             LogUtil.info(sql);
             return executeNoResult(sql);
         }
@@ -168,21 +161,19 @@ public class Dao<T extends BaseEntity> {
     }
 
     public boolean delete(String field, Object value) throws SQLException {
-        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
-        sqlBuilder.setDeleteStatement();
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig);
         sqlBuilder.addParameter(field, value);
 
-        String sql = sqlBuilder.build();
+        String sql = sqlBuilder.build(StatementType.DELETE);
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
     public boolean delete(Map<String, Object> parameters) throws SQLException {
-        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, null);
-        sqlBuilder.setDeleteStatement();
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig);
         sqlBuilder.addParameters(parameters);
 
-        String sql = sqlBuilder.build();
+        String sql = sqlBuilder.build(StatementType.DELETE);
         LogUtil.info(sql);
         return executeNoResult(sql);
     }
@@ -218,19 +209,5 @@ public class Dao<T extends BaseEntity> {
 
     public TableConfig getTableConfig() {
         return tableConfig;
-    }
-
-    private String runGetter(FieldConfig<T> fieldConfig) {
-        try {
-            Object object = fieldConfig.getFieldValue(entityObject);
-            if (object != null) {
-                return object.toString();
-            } else {
-                return null;
-            }
-        } catch (IllegalAccessException e) {
-            LogUtil.error("Error running getter!!" + e.getMessage());
-        }
-        return null;
     }
 }

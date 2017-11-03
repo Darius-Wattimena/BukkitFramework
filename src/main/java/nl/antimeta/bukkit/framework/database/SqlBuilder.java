@@ -21,10 +21,11 @@ public class SqlBuilder<T extends BaseEntity> {
 
     private String selectRange = "*";
 
-    private boolean selectStatement = false;
-    private boolean insertStatement = false;
-    private boolean updateStatement = false;
-    private boolean deleteStatement = false;
+    public SqlBuilder(Entity entity, TableConfig<T> tableConfig) {
+        this.entity = entity;
+        this.tableConfig = tableConfig;
+        this.entityObject = null;
+    }
 
     public SqlBuilder(Entity entity, TableConfig<T> tableConfig, T entityObject) {
         this.entity = entity;
@@ -42,18 +43,19 @@ public class SqlBuilder<T extends BaseEntity> {
         }
     }
 
-    public String build() {
-        if (selectStatement) {
-            return buildSelectStatement();
-        } else if (insertStatement) {
-            return buildInsertStatement();
-        } else if (updateStatement) {
-            return buildUpdateStatement();
-        } else if (deleteStatement) {
-            return buildDeleteStatement();
+    public String build(StatementType type) {
+        switch (type) {
+            case SELECT:
+                return buildSelectStatement();
+            case INSERT:
+                return buildInsertStatement();
+            case UPDATE:
+                return buildUpdateStatement();
+            case DELETE:
+                return buildDeleteStatement();
+            default:
+                return "ERROR";
         }
-
-        return "ERROR";
     }
 
     private String buildSelectStatement() {
@@ -206,22 +208,6 @@ public class SqlBuilder<T extends BaseEntity> {
 
     public void setSelectRange(String selectRange) {
         this.selectRange = selectRange;
-    }
-
-    public void setSelectStatement() {
-        this.selectStatement = true;
-    }
-
-    public void setInsertStatement() {
-        this.insertStatement = true;
-    }
-
-    public void setUpdateStatement() {
-        this.updateStatement = true;
-    }
-
-    public void setDeleteStatement() {
-        this.deleteStatement = true;
     }
 
     public void setId(int id) {
