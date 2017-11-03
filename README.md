@@ -4,3 +4,5 @@ This framework will be used in all the custom plugins on the TGH minecraft serve
 ## TODO
 - [x] Database (ORM)
 - [x] Commands
+- [ ] Json Messages
+- [ ] GUI
