@@ -1,5 +1,8 @@
 package nl.antimeta.bukkit.framework.json;
 
+import nl.antimeta.bukkit.framework.json.enums.ClickAction;
+import nl.antimeta.bukkit.framework.json.enums.HoverAction;
+
 public class JsonBuilder {
 
     private String result;

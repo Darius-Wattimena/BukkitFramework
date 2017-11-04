@@ -1,8 +1,5 @@
-package nl.antimeta.bukkit.framework.json;
+package nl.antimeta.bukkit.framework.json.enums;
 
-/**
- * Created by DariusPC on 2-11-2017.
- */
 public enum HoverAction {
 
     NONE(""),

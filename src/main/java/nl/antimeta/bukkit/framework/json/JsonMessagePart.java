@@ -1,5 +1,7 @@
 package nl.antimeta.bukkit.framework.json;
 
+import nl.antimeta.bukkit.framework.json.enums.ClickAction;
+import nl.antimeta.bukkit.framework.json.enums.HoverAction;
 import org.bukkit.ChatColor;
 
 public class JsonMessagePart {

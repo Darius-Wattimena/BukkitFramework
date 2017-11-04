@@ -1,4 +1,4 @@
-package nl.antimeta.bukkit.framework.json;
+package nl.antimeta.bukkit.framework.json.enums;
 
 public enum ClickAction {
 

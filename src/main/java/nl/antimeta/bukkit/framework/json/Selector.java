@@ -1,5 +1,6 @@
 package nl.antimeta.bukkit.framework.json;
 
+import nl.antimeta.bukkit.framework.json.enums.SelectorType;
 import org.bukkit.GameMode;
 import org.bukkit.entity.EntityType;
 

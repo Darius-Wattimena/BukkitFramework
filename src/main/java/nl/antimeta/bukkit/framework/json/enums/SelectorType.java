@@ -1,8 +1,5 @@
-package nl.antimeta.bukkit.framework.json;
+package nl.antimeta.bukkit.framework.json.enums;
 
-/**
- * Created by DariusPC on 3-11-2017.
- */
 public enum SelectorType {
 
     CUSTOM(""),
@@ -14,7 +11,7 @@ public enum SelectorType {
 
     public String name;
 
-    private SelectorType(String name) {
+    SelectorType(String name) {
         this.name = name;
     }
 }

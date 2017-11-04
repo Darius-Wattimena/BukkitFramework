@@ -1,14 +1,15 @@
 package nl.antimeta.bukkit.framework.json;
 
-import org.bukkit.Bukkit;
+import nl.antimeta.bukkit.framework.json.enums.CommandType;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class JsonMessage {
-    public List<JsonMessagePart> messageParts = new ArrayList<>();
+    private List<JsonMessagePart> messageParts = new ArrayList<>();
+    private String command;
+    private Selector selector;
 
     public void add(String message, ChatColor... chatColor) {
         JsonMessagePart messagePart = new JsonMessagePart();
@@ -21,39 +22,36 @@ public class JsonMessage {
         messageParts.add(messagePart);
     }
 
-    public void send(Player player) {
-        String json = buildJson();
-        send(player, json);
-    }
-
-    private void send(Player player, String json) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " " + json);
-    }
-
-    private void send(Selector selector, String json) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + selector.buildSelector() + " " + json);
-    }
-
-    private void sendAll(String json) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw @a " + json);
-    }
-
-    private void sendRandom(String json) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw @r " + json);
-    }
-
-    public void send(Iterable<Player> players) {
-        String json = buildJson();
-        for (Player player : players) {
-            send(player, json);
-        }
-    }
-
-    private String buildJson() {
+    public String buildJson() {
         StringBuilder result = new StringBuilder();
+        result.append("[{}");
         for(JsonMessagePart messagePart : messageParts) {
+            result.append(",{");
             result.append(messagePart.toJson());
+            result.append("}");
         }
+
+        result.append("]");
         return result.toString();
+    }
+
+    public String getCommand() {
+        return command;
+    }
+
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
+    public void setCommand(CommandType command) {
+        this.command = command.name;
+    }
+
+    public Selector getSelector() {
+        return selector;
+    }
+
+    public void setSelector(Selector selector) {
+        this.selector = selector;
     }
 }
