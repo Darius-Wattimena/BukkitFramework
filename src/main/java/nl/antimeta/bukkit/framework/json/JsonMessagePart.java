@@ -34,7 +34,13 @@ public class JsonMessagePart {
 
     private void initialize(String message, ChatColor... chatColors) {
         text = new StringBuilder(message);
-        chatColor = ChatColor.WHITE;
+
+        if (chatColors != null) {
+            colors(chatColors);
+        } else {
+            chatColor = ChatColor.WHITE;
+        }
+
         bold = false;
         italic = false;
         underlined = false;
@@ -44,6 +50,37 @@ public class JsonMessagePart {
         clickEventValue = "";
         hoverEvent = HoverAction.NONE;
         hoverEventValue = "";
+    }
+
+    /**
+     * Convert all the given config to the accepted Json in minecraft
+     * @return Json value of this message part
+     */
+    public String toJson() {
+        if (text.length() != 0) {
+            JsonBuilder result = new JsonBuilder();
+            result.add("text", text.toString());
+            result.add("color", chatColor.asBungee().getName());
+
+            result.add("bold", bold);
+            result.add("italic", italic);
+            result.add("underlined", underlined);
+            result.add("strikethrough", strikethrough);
+            result.add("obfuscated", obfuscated);
+
+            if (!clickEvent.equals(ClickAction.NONE)) {
+                result.addClickEvent(clickEvent, clickEventValue);
+            }
+
+            if (!hoverEvent.equals(HoverAction.NONE)) {
+                result.addHoverEvent(hoverEvent, hoverEventValue);
+            }
+
+            return result.get();
+
+        } else {
+            return "";
+        }
     }
 
     /**
@@ -170,7 +207,7 @@ public class JsonMessagePart {
      *
      */
     public void unicode(String hex) {
-        text.append("\\" + "u" + hex);
+        text.append("\\" + "u").append(hex);
     }
 
     /**
@@ -201,12 +238,4 @@ public class JsonMessagePart {
         text.append("\\");
     }
 
-    /**
-     * Convert all the given config to the accepted Json in minecraft
-     * @return Json value of this message part
-     */
-    public String toJson() {
-        //TODO
-        return "";
-    }
 }
