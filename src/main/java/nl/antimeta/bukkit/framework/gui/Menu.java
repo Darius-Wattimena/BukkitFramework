@@ -46,6 +46,16 @@ public class Menu {
         }
     }
 
+    public void update(Player player) {
+        if (player.getOpenInventory() != null) {
+            Inventory inventory = player.getOpenInventory().getTopInventory();
+            if (inventory.getHolder() instanceof MenuHolder && ((MenuHolder) inventory.getHolder()).getMenu().equals(this)) {
+                build(inventory);
+                player.updateInventory();
+            }
+        }
+    }
+
     public void addItem(MenuItem item, int slot) {
         items[slot] = item;
     }
@@ -62,33 +72,27 @@ public class Menu {
 
     public void onInventoryClick(InventoryClickEvent e) {
         if (e.getWhoClicked() instanceof Player && e.getInventory().getHolder() instanceof MenuHolder) {
-            MenuHolder holder = (MenuHolder) e.getInventory().getHolder();
-            Menu menu = holder.getMenu();
             int slot = e.getRawSlot();
-            Player player = (Player) e.getWhoClicked();
+            final Player player = (Player) e.getWhoClicked();
+            ItemClickEvent itemClickEvent = new ItemClickEvent(player);
 
-            MenuItem item = menu.getItem(slot);
-            ItemClickEvent itemClickEvent = item.getItemClickEvent();
-
-            item.onItemClick(itemClickEvent);
-            if (itemClickEvent.close || itemClickEvent.back) {
-                final String playerName = player.getName();
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    public void run() {
-                        Player p = Bukkit.getPlayerExact(playerName);
-                        if (p != null) {
-                            p.closeInventory();
+            items[slot].onItemClick(itemClickEvent);
+            if (itemClickEvent.update) {
+                update(player);
+            } else {
+                player.updateInventory();
+                if (itemClickEvent.close || itemClickEvent.back) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                        public void run() {
+                            player.closeInventory();
                         }
-                    }
-                }, 1);
+                    }, 1);
+                }
 
                 if (itemClickEvent.back && parent != null) {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                         public void run() {
-                            Player p = Bukkit.getPlayerExact(playerName);
-                            if (p != null) {
-                                parent.sendInventory(p);
-                            }
+                            parent.sendInventory(player);
                         }
                     }, 3);
                 }

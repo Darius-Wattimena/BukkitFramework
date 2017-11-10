@@ -2,3 +2,6 @@ name: BukkitFramework
 version: 1.0
 author: Greaper
 main: nl.antimeta.bukkit.framework.Main
+commands:
+  bf:
+    description: Bukkit Framework test commands.

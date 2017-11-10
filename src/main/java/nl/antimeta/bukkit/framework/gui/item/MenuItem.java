@@ -12,7 +12,6 @@ public class MenuItem {
     private final String displayName;
     private final ItemStack icon;
     private final List<String> lore;
-    private ItemClickEvent clickEvent;
 
     public MenuItem(String displayName, ItemStack icon, String... lore) {
         this.displayName = displayName;
@@ -28,14 +27,6 @@ public class MenuItem {
 
     public void onItemClick(ItemClickEvent event) {
 
-    }
-
-    public ItemClickEvent getItemClickEvent() {
-        return clickEvent;
-    }
-
-    public void setItemClickEvent(ItemClickEvent clickEvent) {
-        this.clickEvent = clickEvent;
     }
 
     public ItemStack buildIcon() {

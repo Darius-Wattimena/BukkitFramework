@@ -12,7 +12,7 @@ import nl.antimeta.bukkit.framework.gui.item.ItemClickEvent;
 import nl.antimeta.bukkit.framework.gui.item.MenuItem;
 import org.bukkit.Material;
 
-@Command(main = "TestMenu")
+@Command(main = "testmenu")
 public class TestMenu extends PlayerCommand {
 
     private Menu mainMenu;
@@ -28,6 +28,8 @@ public class TestMenu extends PlayerCommand {
         mainMenu.addItem(new TestSubMenuItem(), 11);
         mainMenu.addItem(new TestItem(), 13);
         mainMenu.addItem(new CloseItem(), 14);
+
+        mainMenu.sendInventory(bukkitPlayerCommand.getPlayer());
 
         return true;
     }
@@ -57,11 +59,11 @@ public class TestMenu extends PlayerCommand {
 
         @Override
         public void onItemClick(ItemClickEvent event) {
-            event.close = true;
             Menu childMenu = new Menu("Child menu", Menu.Size.FOUR_LINE, Main.getMain(), mainMenu);
             childMenu.addItem(new MenuItem("Item", Material.GOLDEN_APPLE, "Hi I am a child menu"));
             childMenu.addItem(new BackItem(), 9);
             childMenu.addItem(new CloseItem(), 18);
+            childMenu.sendInventory(event.getPlayer());
         }
     }
 }
