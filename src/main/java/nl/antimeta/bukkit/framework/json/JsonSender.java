@@ -1,5 +1,6 @@
 package nl.antimeta.bukkit.framework.json;
 
+import nl.antimeta.bukkit.framework.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -34,6 +35,8 @@ public class JsonSender {
     }
 
     private void send(String command, String selector, String json) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command + " " + selector + " " + json);
+        Main.getMain().getLogger().info(json);
+        String commandLine = command + " " + selector + " " + json;
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commandLine);
     }
 }

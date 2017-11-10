@@ -5,8 +5,8 @@ import nl.antimeta.bukkit.framework.json.enums.HoverAction;
 
 public class JsonBuilder {
 
-    private String result;
-    private boolean first;
+    private String result = "";
+    private boolean first = true;
 
     public void add(String addition) {
         result += addition;
@@ -47,6 +47,24 @@ public class JsonBuilder {
             first = false;
         } else {
             result += (",\"hoverEvent\":{\"action\":\"" + event.name + "\",\"value\":\"" + value +"\"" + "}");
+        }
+    }
+
+    public void addCustomClickEvent(ClickAction event, String value) {
+        if (first) {
+            result += ("\"clickEvent\":{\"action\":\"" + event.name + "\",\"value\":" + value + "}");
+            first = false;
+        } else {
+            result += (",\"clickEvent\":{\"action\":\"" + event.name + "\",\"value\":" + value + "}");
+        }
+    }
+
+    public void addCustomHoverEvent(HoverAction event, String value) {
+        if (first) {
+            result += ("\"hoverEvent\":{\"action\":\"" + event.name + "\",\"value\":" + value + "}");
+            first = false;
+        } else {
+            result += (",\"hoverEvent\":{\"action\":\"" + event.name + "\",\"value\":" + value + "}");
         }
     }
 

@@ -15,8 +15,10 @@ public class JsonMessagePart {
     private boolean obfuscated;
     private ClickAction clickEvent;
     private String clickEventValue;
+    private boolean customClickEvent;
     private HoverAction hoverEvent;
     private String hoverEventValue;
+    private boolean customHoverEvent;
 
     public JsonMessagePart() {
         initialize();
@@ -37,10 +39,10 @@ public class JsonMessagePart {
     private void initialize(String message, ChatColor... chatColors) {
         text = new StringBuilder(message);
 
+        chatColor = ChatColor.WHITE;
+
         if (chatColors != null) {
             colors(chatColors);
-        } else {
-            chatColor = ChatColor.WHITE;
         }
 
         bold = false;
@@ -50,8 +52,10 @@ public class JsonMessagePart {
         obfuscated = false;
         clickEvent = ClickAction.NONE;
         clickEventValue = "";
+        customClickEvent = false;
         hoverEvent = HoverAction.NONE;
         hoverEventValue = "";
+        customHoverEvent = false;
     }
 
     /**
@@ -71,11 +75,19 @@ public class JsonMessagePart {
             result.add("obfuscated", obfuscated);
 
             if (!clickEvent.equals(ClickAction.NONE)) {
-                result.addClickEvent(clickEvent, clickEventValue);
+                if (customClickEvent) {
+                    result.addCustomClickEvent(clickEvent, clickEventValue);
+                } else {
+                    result.addClickEvent(clickEvent, clickEventValue);
+                }
             }
 
             if (!hoverEvent.equals(HoverAction.NONE)) {
-                result.addHoverEvent(hoverEvent, hoverEventValue);
+                if (customHoverEvent) {
+                    result.addCustomHoverEvent(hoverEvent, hoverEventValue);
+                } else {
+                    result.addHoverEvent(hoverEvent, hoverEventValue);
+                }
             }
 
             return result.get();
@@ -151,6 +163,11 @@ public class JsonMessagePart {
         clickEventValue = value;
     }
 
+    public void customOnClick(ClickAction action, String value) {
+        onClick(action, value);
+        customClickEvent = true;
+    }
+
     /**
      * Add a onhover event on the current {@link JsonMessagePart}
      * @param action
@@ -159,6 +176,11 @@ public class JsonMessagePart {
     public void onHover(HoverAction action, String value) {
         hoverEvent = action;
         hoverEventValue = value;
+    }
+
+    public void customOnHover(HoverAction action, String value) {
+        onHover(action, value);
+        customHoverEvent = true;
     }
 
     /**

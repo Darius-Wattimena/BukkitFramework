@@ -8,5 +8,6 @@ public class BF extends MainCommand {
         super("bf", "Greaper_");
 
         addSubCommand(new TestMenu());
+        addSubCommand(new TestJsonMessage());
     }
 }

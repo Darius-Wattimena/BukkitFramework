@@ -1,5 +1,6 @@
 package nl.antimeta.bukkit.framework.json;
 
+import nl.antimeta.bukkit.framework.Main;
 import nl.antimeta.bukkit.framework.json.enums.CommandType;
 import org.bukkit.ChatColor;
 
@@ -14,7 +15,9 @@ public class JsonMessage {
     public void add(String message, ChatColor... chatColor) {
         JsonMessagePart messagePart = new JsonMessagePart();
         messagePart.text(message);
-        messagePart.colors(chatColor);
+        if (chatColor != null) {
+            messagePart.colors(chatColor);
+        }
         messageParts.add(messagePart);
     }
 
@@ -24,7 +27,7 @@ public class JsonMessage {
 
     public String buildJson() {
         StringBuilder result = new StringBuilder();
-        result.append("[{}");
+        result.append("[\"\"");
         for(JsonMessagePart messagePart : messageParts) {
             result.append(",{");
             result.append(messagePart.toJson());

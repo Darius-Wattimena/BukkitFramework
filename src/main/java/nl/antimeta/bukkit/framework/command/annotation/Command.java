@@ -26,8 +26,6 @@ public @interface Command {
      */
     String permission() default "";
 
-    String adminPermission() default "";
-
     /**
      * Aliases of the main command.
      */
