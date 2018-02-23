@@ -4,5 +4,6 @@ public enum StatementType {
     SELECT,
     INSERT,
     UPDATE,
-    DELETE
+    DELETE,
+    CREATE_TABLE_IF_NEEDED
 }

@@ -7,7 +7,7 @@ import nl.antimeta.bukkit.framework.database.type.MysqlDatabaseType;
 
 public class TestDatabase {
 
-    private Dao<TestEntity> testEntityDao;
+    private TestDao testDao;
 
     public TestDatabase() throws Exception {
         Resource resource = new Resource();
@@ -18,12 +18,11 @@ public class TestDatabase {
         resource.setPort("80");
 
         Database database = new Database(new MysqlDatabaseType(), resource);
-        database.createTable(TestEntity.class);
-
-        testEntityDao = new Dao<>(database, TestEntity.class);
+        testDao = new TestDao(database);
+        testDao.myCustomSql();
     }
 
     public Dao<TestEntity> getTestDao() {
-        return testEntityDao;
+        return testDao;
     }
 }

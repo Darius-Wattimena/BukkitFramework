@@ -34,6 +34,7 @@ public class Dao<T extends BaseEntity> {
             tableConfig.setTableName(entity.tableName());
             initFieldConfig();
         }
+        createTableIfNeeded();
     }
 
     private void initFieldConfig() {
@@ -77,6 +78,12 @@ public class Dao<T extends BaseEntity> {
     public boolean executeNoResult(String sql) throws SQLException {
         PreparedStatement stmt = database.openConnection().prepareStatement(sql);
         return stmt.execute();
+    }
+
+    private void createTableIfNeeded() throws SQLException {
+        SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, database.getDatabaseType());
+        String sql = sqlBuilder.build(StatementType.CREATE_TABLE_IF_NEEDED);
+        executeNoResult(sql);
     }
 
     public List<T> find(Number id) throws SQLException {
@@ -178,7 +185,7 @@ public class Dao<T extends BaseEntity> {
         return executeNoResult(sql);
     }
 
-    private List<T> processResultSet(ResultSet resultSet) {
+    protected List<T> processResultSet(ResultSet resultSet) {
         try {
             List<T> results = new ArrayList<>();
 

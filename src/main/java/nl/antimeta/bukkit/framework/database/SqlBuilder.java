@@ -1,10 +1,15 @@
 package nl.antimeta.bukkit.framework.database;
 
 import nl.antimeta.bukkit.framework.database.annotation.Entity;
+import nl.antimeta.bukkit.framework.database.annotation.Field;
 import nl.antimeta.bukkit.framework.database.model.BaseEntity;
 import nl.antimeta.bukkit.framework.database.model.FieldConfig;
+import nl.antimeta.bukkit.framework.database.model.FieldType;
 import nl.antimeta.bukkit.framework.database.model.TableConfig;
+import nl.antimeta.bukkit.framework.database.type.DatabaseType;
+import nl.antimeta.bukkit.framework.database.type.MysqlDatabaseType;
 import nl.antimeta.bukkit.framework.util.LogUtil;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,21 +21,29 @@ public class SqlBuilder<T extends BaseEntity> {
     private Entity entity;
     private T entityObject;
     private TableConfig<T> tableConfig;
+    private DatabaseType databaseType;
     private Map<String, Object> parameters = new HashMap<>();
     private int id;
 
     private String selectRange = "*";
 
     public SqlBuilder(Entity entity, TableConfig<T> tableConfig) {
-        this.entity = entity;
-        this.tableConfig = tableConfig;
-        this.entityObject = null;
+        this(entity, tableConfig, null, null);
     }
 
     public SqlBuilder(Entity entity, TableConfig<T> tableConfig, T entityObject) {
+        this(entity, tableConfig, entityObject, null);
+    }
+
+    public SqlBuilder(Entity entity, TableConfig<T> tableConfig, DatabaseType databaseType) {
+        this(entity, tableConfig, null, databaseType);
+    }
+
+    public SqlBuilder(Entity entity, TableConfig<T> tableConfig, T entityObject, DatabaseType databaseType) {
         this.entity = entity;
         this.tableConfig = tableConfig;
         this.entityObject = entityObject;
+        this.databaseType = databaseType;
     }
 
     public void addParameter(String key, Object value) {
@@ -53,6 +66,8 @@ public class SqlBuilder<T extends BaseEntity> {
                 return buildUpdateStatement();
             case DELETE:
                 return buildDeleteStatement();
+            case CREATE_TABLE_IF_NEEDED:
+                return buildCreateTableStatement();
             default:
                 return "ERROR";
         }
@@ -186,6 +201,77 @@ public class SqlBuilder<T extends BaseEntity> {
         }
 
         return sql.toString();
+    }
+
+    private String buildCreateTableStatement() {
+        String primaryKeyName = "";
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("CREATE TABLE IF NOT EXISTS `").append(entity.tableName()).append("` (");
+
+        for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
+            java.lang.reflect.Field entityField = fieldConfig.getField();
+            Field field = entityField.getAnnotation(Field.class);
+
+            String fieldName;
+            if (StringUtils.isBlank(field.fieldName())) {
+                fieldName = entityField.getName();
+            } else {
+                fieldName = field.fieldName();
+            }
+
+            sql.append("`").append(fieldName).append("` ");
+            sql.append(getType(field));
+
+            if (!field.nullable()) {
+                sql.append(" NOT NULL");
+            }
+
+            if (field.primary()) {
+                if (databaseType instanceof MysqlDatabaseType) {
+                    sql.append(" AUTO_INCREMENT");
+                }
+                primaryKeyName = field.fieldName();
+            }
+
+            sql.append(", ");
+        }
+
+        sql.append("PRIMARY KEY (`").append(primaryKeyName).append("`)) ");
+        sql.append(databaseType.getTableSuffix());
+        if (databaseType instanceof MysqlDatabaseType) {
+            sql.append(" DEFAULT CHARSET=utf8 AUTO_INCREMENT=0");
+        }
+        return sql.toString();
+    }
+
+    /**
+     * @param field
+     *      Annotation that contains the config of a field.
+     * @return
+     *      Database type of a field eg 'INT(5)' or 'VARCHAR(255)'
+     */
+    private String getType(Field field) {
+        FieldType type = field.fieldType();
+        String typeName = databaseType.getType(type);
+        String size = null;
+        if (type.isDigitSizeNeeded()) {
+            if (field.size() != 0) {
+                type.setSize(field.size());
+            }
+
+            if (field.digitSize() != 0) {
+                type.setDigitsSize(field.digitSize());
+            }
+            size = "(" + type.getSize() + ", "+ type.getDigitsSize() +")";
+        } else if (type.isSizeNeeded()) {
+            if (field.size() != 0) {
+                type.setSize(field.size());
+            }
+            size = "(" + type.getSize() + ")";
+        }
+
+        return typeName + size;
     }
 
     private String runGetter(FieldConfig<T> fieldConfig) {
