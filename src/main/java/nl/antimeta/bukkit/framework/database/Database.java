@@ -1,17 +1,10 @@
 package nl.antimeta.bukkit.framework.database;
 
-import nl.antimeta.bukkit.framework.database.annotation.Entity;
-import nl.antimeta.bukkit.framework.database.annotation.Field;
-import nl.antimeta.bukkit.framework.database.model.BaseEntity;
-import nl.antimeta.bukkit.framework.database.model.FieldType;
 import nl.antimeta.bukkit.framework.database.model.Resource;
 import nl.antimeta.bukkit.framework.database.type.DatabaseType;
-import org.apache.commons.lang.StringUtils;
 
-import java.lang.annotation.Annotation;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class Database {
