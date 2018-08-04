@@ -11,8 +11,7 @@ public enum FieldType {
     SmallInt(5),
     Integer(10),
     BigInt(19),
-    Decimal(38, 5),
-    Unknown;
+    Decimal(38, 5);
 
     private int size = 0;
     private int digitsSize = 0;

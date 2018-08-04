@@ -18,6 +18,17 @@ public class FieldConfig<T> {
     private Class<?> foreignClass;
     private Dao<?> foreignDao;
 
+    public FieldConfig(Field field, String fieldName, nl.antimeta.bukkit.framework.database.annotation.Field fieldAnnotation) {
+        this.fieldName = fieldName;
+        this.primary = fieldAnnotation.primary();
+        this.fieldType = fieldAnnotation.fieldType();
+        this.size = fieldAnnotation.size();
+        this.digitSize = fieldAnnotation.digitSize();
+        this.field = field;
+        this.foreign = fieldAnnotation.foreign();
+        this.foreignAutoLoad = fieldAnnotation.foreignAutoLoad();
+    }
+
     public String getFieldName() {
         return fieldName;
     }

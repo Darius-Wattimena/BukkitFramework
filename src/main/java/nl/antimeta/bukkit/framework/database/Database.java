@@ -1,42 +1,30 @@
 package nl.antimeta.bukkit.framework.database;
 
-import nl.antimeta.bukkit.framework.database.model.Resource;
+import nl.antimeta.bukkit.framework.database.model.DatabaseConnectionResource;
 import nl.antimeta.bukkit.framework.database.type.DatabaseType;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import nl.antimeta.bukkit.framework.database.type.MysqlDatabaseType;
 
 public class Database {
 
-    private Connection connection;
+    private DatabaseConnection connection;
 
     private DatabaseType databaseType;
-    private final Resource resource;
+    private final DatabaseConnectionResource databaseConnectionResource;
 
     private DaoManger daoManger = new DaoManger(this);
 
-    public Database(DatabaseType databaseType, Resource resource) {
+    public Database(DatabaseConnectionResource databaseConnectionResource) {
+        this(new MysqlDatabaseType(), databaseConnectionResource);
+    }
+
+    public Database(DatabaseType databaseType, DatabaseConnectionResource databaseConnectionResource) {
         this.databaseType = databaseType;
-        this.resource = resource;
+        this.databaseConnectionResource = databaseConnectionResource;
+        setupConnection();
     }
 
-    Connection openConnection() throws SQLException {
-        if(checkConnection()) {
-            return connection;
-        } else {
-            try {
-                Class.forName(databaseType.getDriverClassName());
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            connection = DriverManager.getConnection("jdbc:" + databaseType.getUrlPortion() + "://" + resource.getHostname() + ':' + resource.getPort() + '/' + resource.getDatabase() + "?useSSL=false&autoReconnect=true&useUnicode=yes", resource.getUser(), resource.getPassword());
-            return connection;
-        }
-    }
-
-    private boolean checkConnection() throws SQLException {
-        return connection != null && !connection.isClosed();
+    private void setupConnection() {
+        connection = new DatabaseConnection(databaseType, databaseConnectionResource);
     }
 
     public DatabaseType getDatabaseType() {
@@ -49,5 +37,9 @@ public class Database {
 
     public void setDaoManger(DaoManger daoManger) {
         this.daoManger = daoManger;
+    }
+
+    DatabaseConnection getConnection() {
+        return connection;
     }
 }

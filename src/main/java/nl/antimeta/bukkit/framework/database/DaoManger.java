@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class DaoManger {
 
-    private Map<Class<?>, Dao<?>> daoMap = new HashMap<>();
+    private final Map<Class<?>, Dao<?>> daoMap = new HashMap<>();
     private Database database;
 
     public DaoManger(Database database) {

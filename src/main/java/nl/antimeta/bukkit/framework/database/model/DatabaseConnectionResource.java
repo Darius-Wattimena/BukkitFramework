@@ -1,11 +1,12 @@
 package nl.antimeta.bukkit.framework.database.model;
 
-public class Resource {
+public class DatabaseConnectionResource {
     private String hostname;
     private String port;
     private String database;
     private String user;
     private String password;
+    private String jdbcParameters = "?useSSL=false&autoReconnect=true&useUnicode=yes";
 
     public String getHostname() {
         return hostname;
@@ -45,5 +46,13 @@ public class Resource {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getJdbcParameters() {
+        return jdbcParameters;
+    }
+
+    public void setJdbcParameters(String jdbcParameters) {
+        this.jdbcParameters = jdbcParameters;
     }
 }

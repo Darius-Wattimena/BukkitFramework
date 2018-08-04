@@ -1,86 +1,36 @@
 package nl.antimeta.bukkit.framework.database;
 
-import nl.antimeta.bukkit.framework.database.annotation.Entity;
-import nl.antimeta.bukkit.framework.database.annotation.Field;
 import nl.antimeta.bukkit.framework.database.model.BaseEntity;
-import nl.antimeta.bukkit.framework.database.model.FieldConfig;
-import nl.antimeta.bukkit.framework.database.model.TableConfig;
 import nl.antimeta.bukkit.framework.util.LogUtil;
-import org.apache.commons.lang.StringUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Dao<T extends BaseEntity> {
+public class Dao<T extends BaseEntity> extends BaseDao<T> {
 
-    private Database database;
-    private TableConfig<T> tableConfig;
-    private Class<T> tClass;
-    private Entity entity;
     private T entityObject;
 
     public Dao(Database database, Class<T> tClass) throws Exception {
+        super(database, tClass);
         database.getDaoManger().registerDao(tClass, this);
-        this.database = database;
-        this.tClass = tClass;
-        entity = tClass.getAnnotation(Entity.class);
-        if (entity != null) {
-            tableConfig = new TableConfig<>();
-            tableConfig.setDatabaseType(database.getDatabaseType());
-            tableConfig.setTableName(entity.tableName());
-            initFieldConfig();
-        }
-        createTableIfNeeded();
-    }
-
-    private void initFieldConfig() {
-        for (java.lang.reflect.Field entityField : tClass.getDeclaredFields()) {
-            Field field = entityField.getAnnotation(Field.class);
-            if (field != null) {
-                entityField.setAccessible(true);
-
-                String fieldName;
-                if (StringUtils.isBlank(field.fieldName())) {
-                    fieldName = entityField.getName();
-                } else {
-                    fieldName = field.fieldName();
-                }
-
-                FieldConfig<T> fieldConfig = new FieldConfig<>();
-                fieldConfig.setField(entityField);
-                fieldConfig.setFieldName(fieldName);
-                fieldConfig.setFieldType(field.fieldType());
-                fieldConfig.setPrimary(field.primary());
-                fieldConfig.setSize(field.size());
-                fieldConfig.setDigitSize(field.digitSize());
-
-                fieldConfig.setForeign(field.foreign());
-                if (fieldConfig.isForeign()) {
-                    fieldConfig.setForeignClass(entityField.getClass());
-                    fieldConfig.setForeignDao(database.getDaoManger().findDao(entityField.getType()));
-                    fieldConfig.setForeignAutoLoad(field.foreignAutoLoad());
-                }
-
-                tableConfig.getFieldConfigs().put(fieldName, fieldConfig);
-            }
-        }
     }
 
     public ResultSet execute(String sql) throws SQLException {
-        PreparedStatement stmt = database.openConnection().prepareStatement(sql);
+        LogUtil.info(sql);
+        PreparedStatement stmt = database.getConnection().prepareStatement(sql);
         return stmt.executeQuery();
     }
 
     public boolean executeNoResult(String sql) throws SQLException {
-        PreparedStatement stmt = database.openConnection().prepareStatement(sql);
+        LogUtil.info(sql);
+        PreparedStatement stmt = database.getConnection().prepareStatement(sql);
         return stmt.execute();
     }
 
-    private void createTableIfNeeded() throws SQLException {
+    public void createTableIfNeeded() throws SQLException {
         SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, database.getDatabaseType());
         String sql = sqlBuilder.build(StatementType.CREATE_TABLE_IF_NEEDED);
         executeNoResult(sql);
@@ -91,7 +41,6 @@ public class Dao<T extends BaseEntity> {
         sqlBuilder.setId(id.intValue());
 
         String sql = sqlBuilder.build(StatementType.SELECT);
-        LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
@@ -101,7 +50,6 @@ public class Dao<T extends BaseEntity> {
         sqlBuilder.addParameter(field, value);
 
         String sql = sqlBuilder.build(StatementType.SELECT);
-        LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
@@ -111,7 +59,6 @@ public class Dao<T extends BaseEntity> {
         sqlBuilder.addParameters(parameters);
 
         String sql = sqlBuilder.build(StatementType.SELECT);
-        LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
@@ -120,7 +67,6 @@ public class Dao<T extends BaseEntity> {
         SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig);
 
         String sql = sqlBuilder.build(StatementType.SELECT);
-        LogUtil.info(sql);
         ResultSet resultSet = execute(sql);
         return processResultSet(resultSet);
     }
@@ -129,7 +75,6 @@ public class Dao<T extends BaseEntity> {
         SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, entityObject);
 
         String sql = sqlBuilder.build(StatementType.INSERT);
-        LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
@@ -137,7 +82,6 @@ public class Dao<T extends BaseEntity> {
         SqlBuilder<T> sqlBuilder = new SqlBuilder<>(entity, tableConfig, entityObject);
 
         String sql = sqlBuilder.build(StatementType.UPDATE);
-        LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
@@ -160,7 +104,6 @@ public class Dao<T extends BaseEntity> {
             sqlBuilder.setId(id.intValue());
 
             String sql = sqlBuilder.build(StatementType.DELETE);
-            LogUtil.info(sql);
             return executeNoResult(sql);
         }
 
@@ -172,7 +115,6 @@ public class Dao<T extends BaseEntity> {
         sqlBuilder.addParameter(field, value);
 
         String sql = sqlBuilder.build(StatementType.DELETE);
-        LogUtil.info(sql);
         return executeNoResult(sql);
     }
 
@@ -181,40 +123,6 @@ public class Dao<T extends BaseEntity> {
         sqlBuilder.addParameters(parameters);
 
         String sql = sqlBuilder.build(StatementType.DELETE);
-        LogUtil.info(sql);
         return executeNoResult(sql);
-    }
-
-    protected List<T> processResultSet(ResultSet resultSet) {
-        try {
-            List<T> results = new ArrayList<>();
-
-            while (resultSet.next()) {
-                T result = tClass.newInstance();
-                for (FieldConfig<T> fieldConfig : tableConfig.getFieldConfigs().values()) {
-                    if (fieldConfig.isForeign()) {
-                        if (fieldConfig.isForeignAutoLoad()) {
-                            List<?> foreignResult = fieldConfig.getForeignDao().find((Number) resultSet.getObject(fieldConfig.getFieldName()));
-                            if (!foreignResult.isEmpty()) {
-                                fieldConfig.setFieldValue(result, foreignResult.get(0));
-                            }
-                        }
-                    } else {
-                        Object resultFieldValue = resultSet.getObject(fieldConfig.getFieldName());
-                        fieldConfig.setFieldValue(result, fieldConfig.getField().getType().cast(resultFieldValue));
-                    }
-                }
-                results.add(result);
-            }
-
-            return results;
-        } catch (InstantiationException | SQLException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public TableConfig getTableConfig() {
-        return tableConfig;
     }
 }
