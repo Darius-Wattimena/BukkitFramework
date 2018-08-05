@@ -8,23 +8,23 @@ public class Database {
 
     private DatabaseConnection connection;
 
-    private DatabaseType databaseType;
-    private final DatabaseConnectionResource databaseConnectionResource;
+    private final DatabaseType databaseType;
+    private final DatabaseConnectionResource resource;
+    private final DaoManger daoManger;
 
-    private DaoManger daoManger = new DaoManger(this);
-
-    public Database(DatabaseConnectionResource databaseConnectionResource) {
-        this(new MysqlDatabaseType(), databaseConnectionResource);
+    public Database(DatabaseConnectionResource resource) {
+        this(new MysqlDatabaseType(), resource);
     }
 
-    public Database(DatabaseType databaseType, DatabaseConnectionResource databaseConnectionResource) {
+    public Database(DatabaseType databaseType, DatabaseConnectionResource resource) {
         this.databaseType = databaseType;
-        this.databaseConnectionResource = databaseConnectionResource;
+        this.resource = resource;
+        this.daoManger = new DaoManger(this);
         setupConnection();
     }
 
     private void setupConnection() {
-        connection = new DatabaseConnection(databaseType, databaseConnectionResource);
+        connection = new DatabaseConnection(databaseType, resource);
     }
 
     public DatabaseType getDatabaseType() {
@@ -33,10 +33,6 @@ public class Database {
 
     public DaoManger getDaoManger() {
         return daoManger;
-    }
-
-    public void setDaoManger(DaoManger daoManger) {
-        this.daoManger = daoManger;
     }
 
     DatabaseConnection getConnection() {

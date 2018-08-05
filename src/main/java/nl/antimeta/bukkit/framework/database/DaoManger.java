@@ -1,6 +1,8 @@
 package nl.antimeta.bukkit.framework.database;
 
 import nl.antimeta.bukkit.framework.database.model.BaseEntity;
+import nl.antimeta.bukkit.framework.test.TestDao;
+import nl.antimeta.bukkit.framework.test.TestEntity;
 import nl.antimeta.bukkit.framework.util.LogUtil;
 
 import java.util.HashMap;
@@ -38,5 +40,4 @@ public class DaoManger {
 
         return (Dao<T>) daoMap.get(tClass);
     }
-
 }

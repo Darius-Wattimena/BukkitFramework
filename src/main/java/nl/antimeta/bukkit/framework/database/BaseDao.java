@@ -59,7 +59,7 @@ abstract class BaseDao<T extends BaseEntity> {
         tableConfig.getFieldConfigs().put(fieldName, fieldConfig);
     }
 
-    protected List<T> processResultSet(ResultSet resultSet) {
+    public List<T> processResultSet(ResultSet resultSet) {
         try {
             List<T> results = new ArrayList<>();
 

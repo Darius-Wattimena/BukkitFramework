@@ -1,7 +1,7 @@
 package nl.antimeta.bukkit.framework.command;
 
+import nl.antimeta.bukkit.framework.command.annotation.Command;
 import nl.antimeta.bukkit.framework.command.model.BukkitCommand;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
@@ -13,7 +13,7 @@ public abstract class BaseCommand implements CommandExecutor {
     private BukkitCommand bukkitCommand;
 
     public BaseCommand() {
-        nl.antimeta.bukkit.framework.command.annotation.Command command = getClass().getAnnotation(nl.antimeta.bukkit.framework.command.annotation.Command.class);
+        Command command = getClass().getAnnotation(Command.class);
         bukkitCommand = new BukkitCommand();
         bukkitCommand.setMain(command.main());
         bukkitCommand.setPermission(command.permission());
@@ -21,7 +21,7 @@ public abstract class BaseCommand implements CommandExecutor {
         bukkitCommand.setSubcommands(Arrays.asList(command.subcommands()));
     }
 
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         this.sender = sender;
 
         bukkitCommand.setArgs(args);
